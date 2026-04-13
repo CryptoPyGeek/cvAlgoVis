@@ -201,28 +201,37 @@ export default function App() {
       </header>
 
       <main className="workspace">
-        <CodePanel
-          snippet={snippet}
-          onCopy={() => {
-            navigator.clipboard.writeText(snippet).catch(() => null);
-          }}
-        />
-        <ImagePreviewPanel
-          sourceImage={sourceImage}
-          resultImage={resultImage}
-          statusText={statusText}
-          elapsedMs={elapsedMs}
-        />
-        <ParamControlPanel
-          params={activeAlgorithm?.params ?? []}
-          values={paramValues}
-          onChange={(name, value) =>
-            setParamValues((old) => ({
-              ...old,
-              [name]: value
-            }))
-          }
-        />
+        <div className="cell cell-result">
+          <ImagePreviewPanel
+            title="效果显示区（处理后图像）"
+            image={resultImage || sourceImage}
+            metaLeft={statusText}
+            metaRight={`处理耗时：${elapsedMs} ms`}
+          />
+        </div>
+        <div className="cell cell-params">
+          <ParamControlPanel
+            params={activeAlgorithm?.params ?? []}
+            values={paramValues}
+            onChange={(name, value) =>
+              setParamValues((old) => ({
+                ...old,
+                [name]: value
+              }))
+            }
+          />
+        </div>
+        <div className="cell cell-source">
+          <ImagePreviewPanel title="原始图像区" image={sourceImage} metaLeft="输入图像" />
+        </div>
+        <div className="cell cell-code">
+          <CodePanel
+            snippet={snippet}
+            onCopy={() => {
+              navigator.clipboard.writeText(snippet).catch(() => null);
+            }}
+          />
+        </div>
       </main>
     </div>
   );

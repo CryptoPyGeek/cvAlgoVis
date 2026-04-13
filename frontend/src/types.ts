@@ -5,6 +5,7 @@ export type ParamDef = {
   max: number;
   step: number;
   default: number;
+  description?: string;
 };
 
 export type AlgorithmDef = {
