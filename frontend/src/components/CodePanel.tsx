@@ -1,51 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type Props = {
   snippet: string;
+  highlightedHtml: string;
+  pygmentsCss: string;
   onCopy: () => void;
 };
 
-const KEYWORDS = [
-  "def",
-  "return",
-  "for",
-  "in",
-  "if",
-  "else",
-  "import",
-  "from",
-  "class",
-  "while",
-  "try",
-  "except",
-  "True",
-  "False",
-  "None"
-];
-
-function escapeHtml(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
-function highlightPython(code: string): string {
-  const escaped = escapeHtml(code);
-  const withComments = escaped.replace(/(#.*)$/gm, '<span class="tok-comment">$1</span>');
-  const withStrings = withComments.replace(
-    /(".*?"|'.*?')/g,
-    '<span class="tok-string">$1</span>'
-  );
-  return KEYWORDS.reduce((acc, kw) => {
-    const re = new RegExp(`\\b${kw}\\b`, "g");
-    return acc.replace(re, `<span class="tok-keyword">${kw}</span>`);
-  }, withStrings);
-}
-
-export function CodePanel({ snippet, onCopy }: Props) {
-  const [fontSize, setFontSize] = useState(13);
-  const highlighted = useMemo(() => highlightPython(snippet), [snippet]);
+export function CodePanel({ snippet, highlightedHtml, pygmentsCss, onCopy }: Props) {
+  const [fontSize, setFontSize] = useState(14);
 
   return (
     <section className="panel code-panel">
@@ -64,8 +27,9 @@ export function CodePanel({ snippet, onCopy }: Props) {
       <pre
         className="code-highlight"
         style={{ fontSize }}
-        dangerouslySetInnerHTML={{ __html: highlighted }}
+        dangerouslySetInnerHTML={{ __html: highlightedHtml || `<code>${snippet}</code>` }}
       />
+      {pygmentsCss ? <style>{pygmentsCss}</style> : null}
     </section>
   );
 }

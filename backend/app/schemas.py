@@ -31,6 +31,8 @@ class CodeSnippetResponse(BaseModel):
     algorithm_id: str
     language: str = "python"
     snippet: str
+    highlighted_html: str
+    pygments_css: str
 
 
 class CatalogResponse(BaseModel):

@@ -8,11 +8,27 @@ export async function fetchCatalog(): Promise<CatalogResponse> {
   return res.json();
 }
 
-export async function fetchSnippet(algorithmId: string): Promise<string> {
+export type SnippetPayload = {
+  snippet: string;
+  highlighted_html: string;
+  pygments_css: string;
+};
+
+export async function fetchSnippet(algorithmId: string): Promise<SnippetPayload> {
   const res = await fetch(`${API_BASE}/code-snippet?algorithm_id=${algorithmId}`);
-  if (!res.ok) return "# snippet unavailable";
+  if (!res.ok) {
+    return {
+      snippet: "# snippet unavailable",
+      highlighted_html: "<pre># snippet unavailable</pre>",
+      pygments_css: ""
+    };
+  }
   const payload = await res.json();
-  return payload.snippet as string;
+  return {
+    snippet: payload.snippet as string,
+    highlighted_html: payload.highlighted_html as string,
+    pygments_css: payload.pygments_css as string
+  };
 }
 
 export async function processImage(payload: {

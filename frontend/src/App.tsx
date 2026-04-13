@@ -22,6 +22,8 @@ export default function App() {
   const [sourceImageApi, setSourceImageApi] = useState<string>("");
   const [resultImage, setResultImage] = useState<string>("");
   const [snippet, setSnippet] = useState<string>("# loading...");
+  const [highlightedSnippet, setHighlightedSnippet] = useState<string>("<pre># loading...</pre>");
+  const [pygmentsCss, setPygmentsCss] = useState<string>("");
   const [statusText, setStatusText] = useState("状态：Ready");
   const [elapsedMs, setElapsedMs] = useState(0);
 
@@ -111,7 +113,11 @@ export default function App() {
     if (!activeAlgorithm) return;
     const defaults = Object.fromEntries(activeAlgorithm.params.map((p) => [p.name, p.default]));
     setParamValues(defaults);
-    fetchSnippet(activeAlgorithm.id).then(setSnippet);
+    fetchSnippet(activeAlgorithm.id).then((payload) => {
+      setSnippet(payload.snippet);
+      setHighlightedSnippet(payload.highlighted_html);
+      setPygmentsCss(payload.pygments_css);
+    });
   }, [activeAlgorithm?.id]);
 
   useDebouncedEffect(
@@ -227,6 +233,8 @@ export default function App() {
         <div className="cell cell-code">
           <CodePanel
             snippet={snippet}
+            highlightedHtml={highlightedSnippet}
+            pygmentsCss={pygmentsCss}
             onCopy={() => {
               navigator.clipboard.writeText(snippet).catch(() => null);
             }}

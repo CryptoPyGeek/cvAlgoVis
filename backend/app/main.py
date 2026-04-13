@@ -2,6 +2,9 @@ import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import PythonLexer
 
 from app.catalog import get_catalog
 from app.examples.code_snippets import ALGORITHM_SNIPPETS
@@ -42,7 +45,15 @@ def code_snippet(algorithm_id: str):
     snippet = ALGORITHM_SNIPPETS.get(algorithm_id)
     if snippet is None:
         raise HTTPException(status_code=404, detail=f"Unknown algorithm: {algorithm_id}")
-    return CodeSnippetResponse(algorithm_id=algorithm_id, snippet=snippet)
+    formatter = HtmlFormatter(cssclass="code-highlight", nowrap=False)
+    highlighted_html = highlight(snippet, PythonLexer(), formatter)
+    pygments_css = formatter.get_style_defs(".code-highlight")
+    return CodeSnippetResponse(
+        algorithm_id=algorithm_id,
+        snippet=snippet,
+        highlighted_html=highlighted_html,
+        pygments_css=pygments_css,
+    )
 
 
 @app.get("/opencv-reference")
