@@ -4,12 +4,25 @@
 
 ## 功能概览
 
-- 三栏工作台：代码区 / 图像区 / 参数区
-- 图像区双面板：原始图像 + 处理后图像
-- 算法切换：边缘、阈值、形态学、滤波、锐化
+- 主页为四方格工作台：
+  - 左上：效果显示区（处理后图像）
+  - 右上：参数设置区（含参数控制说明）
+  - 左下：原始图像区
+  - 右下：代码区（支持字号调节与高亮显示）
+- 算法切换已扩充为九大类：
+  - 颜色与强度处理（RGB/HSV/YUV/Lab、HDR）
+  - 几何变换（仿射、透视、旋转、缩放、平移、倾斜）
+  - 阈值与二值化（二值化、自适应、全局、Otsu）
+  - 去噪与平滑（高斯、中值、均值、双边）
+  - 形态学处理（开/闭/梯度/黑帽/白帽/顶帽/底帽）
+  - 梯度与边缘检测（Canny、Laplacian）
+  - 图像分割（分水岭、GrabCut）
+  - 特征检测与描述（Harris、Shi-Tomasi、FAST、SIFT、SURF、ORB、LBP、HOG）
+  - 匹配与检索（KNN、BF、FLANN、模板匹配、模板匹配+同源）
 - 参数交互：滑块 + 数值输入 + 鼠标滚轮微调
 - 实时反馈：前端节流调用 `/process`
 - 开发辅助：算法 Python 代码片段 + OpenCV 函数说明
+- 默认样例图：`frontend/public/samples/contact.png`
 
 ## 界面截图
 
@@ -53,7 +66,7 @@ cvAlgoVis/
     requirements.txt
   frontend/
     public/
-      samples/sample-1.svg
+      samples/contact.png
       screenshots/
         ui-workbench.png
         sample-before.svg
@@ -78,6 +91,8 @@ cvAlgoVis/
     package.json
     tsconfig.json
     vite.config.ts
+  docs/
+    api.md
   README.md
   .gitignore
 ```
@@ -155,6 +170,11 @@ GET /opencv-reference
 | `cv2.warpPerspective` | 透视变换 | `src`, `M`, `dsize` | 变换后 `ndarray` |
 | `cv2.matchTemplate` | 模板匹配定位 | `image`, `templ`, `method` | 匹配响应图 `ndarray` |
 | `cv2.CascadeClassifier.detectMultiScale` | 级联检测（如人脸） | `image`, `scaleFactor`, `minNeighbors`, `minSize` | 检测框数组 `(x,y,w,h)` |
+| `cv2.adaptiveThreshold` | 自适应阈值二值化 | `src`, `maxValue`, `adaptiveMethod`, `thresholdType`, `blockSize`, `C` | 二值图 `ndarray` |
+| `cv2.morphologyEx` | 形态学复合操作 | `src`, `op`, `kernel` | 处理后图像 `ndarray` |
+| `cv2.grabCut` | 图割前景分割 | `img`, `mask`, `rect`, `iterCount`, `mode` | 更新后的 `mask` |
+| `cv2.goodFeaturesToTrack` | Shi-Tomasi 角点检测 | `image`, `maxCorners`, `qualityLevel`, `minDistance` | 角点坐标数组 |
+| `cv2.BFMatcher` / `cv2.FlannBasedMatcher` | 特征匹配器 | 匹配器配置参数 | 匹配器对象 |
 
 ## 常见问题
 
@@ -166,6 +186,4 @@ GET /opencv-reference
 
 ## 联系方式
 
-![微信公众号](frontend/public/samples/contact.jpg)
-
-
+![微信公众号](frontend/public/samples/contact.png)
