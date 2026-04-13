@@ -164,3 +164,8 @@ GET /opencv-reference
 - 原因：系统未安装可用 Python 或 PATH 未配置
 - 建议：先执行 `python --version`，确认解释器可用后再创建虚拟环境
 
+## 联系方式
+
+![微信公众号](frontend/public/samples/contact.jpg)
+
+
