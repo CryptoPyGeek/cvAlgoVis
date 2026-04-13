@@ -2,18 +2,18 @@
 
 一个可交互的计算机视觉实验应用：前端实时调参，后端基于 OpenCV 处理图像并返回结果。
 
-## 功能特性
+## 功能概览
 
 - 三栏工作台：代码区 / 图像区 / 参数区
 - 图像区双面板：原始图像 + 处理后图像
 - 算法切换：边缘、阈值、形态学、滤波、锐化
 - 参数交互：滑块 + 数值输入 + 鼠标滚轮微调
-- 实时反馈：前端节流请求后端 `/process`
-- 开发辅助：算法 Python 代码片段 + OpenCV 函数说明接口
+- 实时反馈：前端节流调用 `/process`
+- 开发辅助：算法 Python 代码片段 + OpenCV 函数说明
 
 ## 界面截图
 
-### 真实 UI 工作台（本地运行截图）
+### 真实 UI 工作台
 
 ![真实 UI 工作台](frontend/public/screenshots/ui-workbench.png)
 
@@ -31,7 +31,7 @@
 - 后端：FastAPI + OpenCV + NumPy
 - 测试：Pytest（单元 + 集成）
 
-## 目录结构
+## 当前目录结构（与项目现状一致）
 
 ```text
 cvAlgoVis/
@@ -40,7 +40,8 @@ cvAlgoVis/
       main.py
       catalog.py
       schemas.py
-      examples/code_snippets.py
+      examples/
+        code_snippets.py
       services/
         algorithms.py
         image_io.py
@@ -51,17 +52,34 @@ cvAlgoVis/
       test_api_process.py
     requirements.txt
   frontend/
-    public/samples/sample-1.svg
+    public/
+      samples/sample-1.svg
+      screenshots/
+        ui-workbench.png
+        sample-before.svg
+        sample-after.svg
     src/
       api/client.ts
-      components/*
-      hooks/*
+      components/
+        AlgorithmSelector.tsx
+        CodePanel.tsx
+        ImagePreviewPanel.tsx
+        LibrarySelector.tsx
+        ParamControlPanel.tsx
+      config/libraryAlgorithmMap.ts
+      hooks/
+        useDebouncedEffect.ts
+        useWheelAdjust.ts
       App.tsx
       main.tsx
       styles.css
+      types.ts
+    index.html
     package.json
-  design/demo/
-  docs/api.md
+    tsconfig.json
+    vite.config.ts
+  README.md
+  .gitignore
 ```
 
 ## 环境要求
@@ -70,7 +88,7 @@ cvAlgoVis/
 - Python 3.10+
 - pip
 
-## 快速开始
+## 快速启动
 
 ### 1) 启动后端
 
@@ -91,7 +109,7 @@ macOS/Linux:
 source .venv/bin/activate
 ```
 
-安装依赖并启动：
+安装依赖并运行：
 
 ```bash
 pip install -r requirements.txt
@@ -119,24 +137,24 @@ cd backend
 pytest -q
 ```
 
-## OpenCV 函数说明
+## OpenCV 函数清单（用途/参数/返回值）
 
-项目在 `backend/app/services/opencv_reference.py` 中系统整理并注释了常见函数：
-
-- `imread`
-- `cvtColor`
-- `GaussianBlur`
-- `Canny`
-- `findContours`
-- `warpPerspective`
-- `matchTemplate`
-- `detectMultiScale`
-
-接口查看：
+以下函数已在 `backend/app/services/opencv_reference.py` 统一维护，并可通过 API 获取：
 
 ```text
 GET /opencv-reference
 ```
+
+| 函数 | 用途 | 核心参数 | 返回值 |
+| --- | --- | --- | --- |
+| `cv2.imread` | 从磁盘读取图像 | `filename`, `flags` | `ndarray` 或 `None` |
+| `cv2.cvtColor` | 色彩空间转换（如 BGR->GRAY） | `src`, `code` | 转换后的 `ndarray` |
+| `cv2.GaussianBlur` | 高斯滤波降噪 | `src`, `ksize`, `sigmaX` | 模糊后 `ndarray` |
+| `cv2.Canny` | 边缘检测 | `image`, `threshold1`, `threshold2`, `apertureSize` | 单通道边缘图 `ndarray` |
+| `cv2.findContours` | 轮廓查找 | `image`, `mode`, `method` | `(contours, hierarchy)` |
+| `cv2.warpPerspective` | 透视变换 | `src`, `M`, `dsize` | 变换后 `ndarray` |
+| `cv2.matchTemplate` | 模板匹配定位 | `image`, `templ`, `method` | 匹配响应图 `ndarray` |
+| `cv2.CascadeClassifier.detectMultiScale` | 级联检测（如人脸） | `image`, `scaleFactor`, `minNeighbors`, `minSize` | 检测框数组 `(x,y,w,h)` |
 
 ## 常见问题
 
@@ -144,9 +162,5 @@ GET /opencv-reference
 
 - 现象：`python: command not found` 或命令直接退出
 - 原因：系统未安装可用 Python 或 PATH 未配置
-- 建议：先确认 `python --version` 可用，再执行建环境命令
-
-## API 文档
-
-详见 `docs/api.md`
+- 建议：先执行 `python --version`，确认解释器可用后再创建虚拟环境
 
