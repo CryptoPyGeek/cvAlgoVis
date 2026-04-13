@@ -1,0 +1,6 @@
+.trae/
+docs/
+design/
+frontend/dist/
+frontend/node_modules/
+backend/.venv/
