@@ -9,7 +9,7 @@ import { ParamControlPanel } from "./components/ParamControlPanel";
 import { useDebouncedEffect } from "./hooks/useDebouncedEffect";
 import type { CatalogResponse } from "./types";
 
-const SAMPLE_IMAGE = "/samples/sample-1.svg";
+const SAMPLE_IMAGE = "/samples/contact.png";
 
 export default function App() {
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
