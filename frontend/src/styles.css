@@ -136,7 +136,48 @@ button.small {
 
 .panel-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.font-size-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-size-label,
+.font-size-value {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.font-size-btn {
+  min-width: 34px;
+  justify-content: center;
+}
+
+.code-block {
+  margin: 0;
+  background: #0d1016;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  overflow: auto;
+  line-height: 1.5;
+  white-space: pre;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: #cce2ff;
+}
+
+.code-panel .code-highlight {
+  background: transparent !important;
+}
+
+.code-panel .code-highlight pre {
+  margin: 0;
+  background: transparent !important;
 }
 
 pre {
@@ -217,18 +258,12 @@ pre {
   color: var(--muted);
 }
 
-.code-highlight .tok-keyword {
-  color: #7fb6ff;
-  font-weight: 600;
+.highlight-ok {
+  color: #7acb8f;
 }
 
-.code-highlight .tok-string {
-  color: #86d39b;
-}
-
-.code-highlight .tok-comment {
-  color: #7d8aa8;
-  font-style: italic;
+.highlight-off {
+  color: #ffb366;
 }
 
 @media (max-width: 1280px) {

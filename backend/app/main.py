@@ -45,7 +45,7 @@ def code_snippet(algorithm_id: str):
     snippet = ALGORITHM_SNIPPETS.get(algorithm_id)
     if snippet is None:
         raise HTTPException(status_code=404, detail=f"Unknown algorithm: {algorithm_id}")
-    formatter = HtmlFormatter(cssclass="code-highlight", nowrap=False)
+    formatter = HtmlFormatter(cssclass="code-highlight", nowrap=True, style="monokai")
     highlighted_html = highlight(snippet, PythonLexer(), formatter)
     pygments_css = formatter.get_style_defs(".code-highlight")
     return CodeSnippetResponse(

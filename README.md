@@ -22,6 +22,7 @@
 - 参数交互：滑块 + 数值输入 + 鼠标滚轮微调
 - 实时反馈：前端节流调用 `/process`
 - 开发辅助：算法 Python 代码片段 + OpenCV 函数说明
+- 代码高亮：后端 Pygments 生成，主题为 Monokai
 - 默认样例图：`frontend/public/samples/contact.png`
 
 ## 界面截图
@@ -131,6 +132,12 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+Git Bash 推荐（避免 `uvicorn: command not found`）：
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
 后端地址：`http://localhost:8000`
 
 ### 2) 启动前端
@@ -183,6 +190,12 @@ GET /opencv-reference
 - 现象：`python: command not found` 或命令直接退出
 - 原因：系统未安装可用 Python 或 PATH 未配置
 - 建议：先执行 `python --version`，确认解释器可用后再创建虚拟环境
+
+### 代码区高亮不是彩色
+
+- 现象：代码区显示纯文本，状态提示为“高亮已降级”
+- 原因：`/code-snippet` 接口不可用（常见于后端未启动）
+- 建议：先启动后端，再刷新前端页面；后端可用时状态会变为“高亮已启用（Pygments）”
 
 ## 联系方式
 

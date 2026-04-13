@@ -24,6 +24,8 @@ export default function App() {
   const [snippet, setSnippet] = useState<string>("# loading...");
   const [highlightedSnippet, setHighlightedSnippet] = useState<string>("<pre># loading...</pre>");
   const [pygmentsCss, setPygmentsCss] = useState<string>("");
+  const [highlightAvailable, setHighlightAvailable] = useState(false);
+  const [highlightMessage, setHighlightMessage] = useState("高亮状态初始化中");
   const [statusText, setStatusText] = useState("状态：Ready");
   const [elapsedMs, setElapsedMs] = useState(0);
 
@@ -113,11 +115,21 @@ export default function App() {
     if (!activeAlgorithm) return;
     const defaults = Object.fromEntries(activeAlgorithm.params.map((p) => [p.name, p.default]));
     setParamValues(defaults);
-    fetchSnippet(activeAlgorithm.id).then((payload) => {
-      setSnippet(payload.snippet);
-      setHighlightedSnippet(payload.highlighted_html);
-      setPygmentsCss(payload.pygments_css);
-    });
+    fetchSnippet(activeAlgorithm.id)
+      .then((payload) => {
+        setSnippet(payload.snippet);
+        setHighlightedSnippet(payload.highlighted_html);
+        setPygmentsCss(payload.pygments_css);
+        setHighlightAvailable(payload.highlight_available);
+        setHighlightMessage(payload.message);
+      })
+      .catch(() => {
+        setSnippet("# snippet unavailable");
+        setHighlightedSnippet("");
+        setPygmentsCss("");
+        setHighlightAvailable(false);
+        setHighlightMessage("高亮已降级：snippet 请求异常");
+      });
   }, [activeAlgorithm?.id]);
 
   useDebouncedEffect(
@@ -235,6 +247,8 @@ export default function App() {
             snippet={snippet}
             highlightedHtml={highlightedSnippet}
             pygmentsCss={pygmentsCss}
+            highlightAvailable={highlightAvailable}
+            highlightMessage={highlightMessage}
             onCopy={() => {
               navigator.clipboard.writeText(snippet).catch(() => null);
             }}
