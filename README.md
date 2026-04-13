@@ -19,11 +19,11 @@
 
 ### 输入示意（原始图像）
 
-![原始图像示意](design/demo/assets/sample-before.svg)
+![原始图像示意](frontend/public/screenshots/sample-before.svg)
 
 ### 输出示意（处理后图像）
 
-![处理后图像示意](design/demo/assets/sample-after.svg)
+![处理后图像示意](frontend/public/screenshots/sample-after.svg)
 
 ## 技术栈
 
