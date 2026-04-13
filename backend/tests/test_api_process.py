@@ -47,6 +47,35 @@ def test_process_canny_success():
     assert payload["meta"]["algorithm"] == "canny"
 
 
+def test_process_watershed_success():
+    response = client.post(
+        "/process",
+        json={
+            "library_id": "opencv",
+            "algorithm_id": "watershed_segmentation",
+            "params": {},
+            "image": make_data_url(),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["processed_image"].startswith("data:image/png;base64,")
+    assert payload["meta"]["algorithm"] == "watershed_segmentation"
+
+
+def test_process_color_conversion_success():
+    response = client.post(
+        "/process",
+        json={
+            "library_id": "opencv",
+            "algorithm_id": "bgr_to_lab",
+            "params": {},
+            "image": make_data_url(),
+        },
+    )
+    assert response.status_code == 200
+
+
 def test_process_unknown_algorithm():
     response = client.post(
         "/process",

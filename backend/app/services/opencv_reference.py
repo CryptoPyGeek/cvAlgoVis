@@ -55,4 +55,54 @@ OPENCV_FUNCTION_REFERENCE = {
         },
         "returns": "检测框列表 ndarray，形如 (x, y, w, h)。",
     },
+    "cv2.adaptiveThreshold": {
+        "purpose": "自适应阈值二值化。",
+        "params": {"src": "灰度图", "maxValue": "最大值", "adaptiveMethod": "自适应策略", "thresholdType": "阈值类型", "blockSize": "邻域大小(奇数)", "C": "常量偏置"},
+        "returns": "二值图 ndarray。",
+    },
+    "cv2.morphologyEx": {
+        "purpose": "形态学复合操作（开/闭/梯度/顶帽/黑帽）。",
+        "params": {"src": "输入图像", "op": "操作类型", "kernel": "结构元素"},
+        "returns": "处理后图像 ndarray。",
+    },
+    "cv2.distanceTransform": {
+        "purpose": "距离变换，常用于分水岭分割前景提取。",
+        "params": {"src": "二值图", "distanceType": "距离类型", "maskSize": "掩膜大小"},
+        "returns": "距离图 ndarray(float)。",
+    },
+    "cv2.grabCut": {
+        "purpose": "基于图割的前景分割。",
+        "params": {"img": "输入图像", "mask": "标签掩膜", "rect": "初始前景矩形", "bgdModel": "背景模型", "fgdModel": "前景模型", "iterCount": "迭代次数", "mode": "初始化模式"},
+        "returns": "更新后的 mask（通过引用更新）。",
+    },
+    "cv2.cornerHarris": {
+        "purpose": "Harris 角点检测。",
+        "params": {"src": "灰度浮点图", "blockSize": "邻域大小", "ksize": "Sobel 核大小", "k": "Harris 系数"},
+        "returns": "角点响应图 ndarray。",
+    },
+    "cv2.goodFeaturesToTrack": {
+        "purpose": "Shi-Tomasi 角点检测。",
+        "params": {"image": "灰度图", "maxCorners": "最大角点数", "qualityLevel": "质量阈值", "minDistance": "最小间距"},
+        "returns": "角点坐标数组。",
+    },
+    "cv2.ORB_create": {
+        "purpose": "创建 ORB 特征检测与描述器。",
+        "params": {"nfeatures": "期望特征数量"},
+        "returns": "ORB 检测器对象。",
+    },
+    "cv2.SIFT_create": {
+        "purpose": "创建 SIFT 特征检测与描述器。",
+        "params": {"nfeatures": "期望特征数量"},
+        "returns": "SIFT 检测器对象。",
+    },
+    "cv2.BFMatcher": {
+        "purpose": "暴力匹配器（BF）用于描述子匹配。",
+        "params": {"normType": "距离度量", "crossCheck": "是否双向一致"},
+        "returns": "匹配器对象。",
+    },
+    "cv2.FlannBasedMatcher": {
+        "purpose": "FLANN 近似最近邻匹配器。",
+        "params": {"indexParams": "索引参数", "searchParams": "搜索参数"},
+        "returns": "匹配器对象。",
+    },
 }
