@@ -6,3 +6,4 @@ pydantic==2.11.7
 pytest==8.4.1
 httpx==0.28.1
 Pygments==2.19.1
+pyinstaller==6.11.1

@@ -159,6 +159,29 @@ cd backend
 pytest -q
 ```
 
+## 桌面软件打包
+
+项目已提供基于 `Electron + Python sidecar` 的桌面化方案，可打包为用户双击即可运行的软件。
+
+相关文件：
+
+- `desktop/electron/`
+- `backend/entry.py`
+- `backend/pyinstaller.spec`
+- `docs/desktop-packaging.md`
+
+根目录一键构建命令：
+
+```bash
+npm run build:desktop
+```
+
+说明：
+
+- Windows 目标产物：`.exe`
+- macOS 目标产物：`.app / .dmg`
+- 前端会在桌面模式下自动读取运行时注入的 API 地址，不再写死开发地址
+
 ## OpenCV 函数清单（用途/参数/返回值）
 
 以下函数已在 `backend/app/services/opencv_reference.py` 统一维护，并可通过 API 获取：

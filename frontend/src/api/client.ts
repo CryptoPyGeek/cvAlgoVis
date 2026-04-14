@@ -1,6 +1,7 @@
 import type { CatalogResponse, ProcessResponse } from "../types";
+import { getApiBase } from "../config/runtime";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = getApiBase();
 
 export async function fetchCatalog(): Promise<CatalogResponse> {
   const res = await fetch(`${API_BASE}/catalog`);
