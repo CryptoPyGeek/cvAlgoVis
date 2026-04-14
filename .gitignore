@@ -4,3 +4,6 @@ design/
 frontend/dist/
 frontend/node_modules/
 backend/.venv/
+dist-desktop/
+desktop/
+

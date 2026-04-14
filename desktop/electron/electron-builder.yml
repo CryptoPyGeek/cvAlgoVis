@@ -3,10 +3,11 @@ productName: cvAlgoVis
 directories:
   output: ../../dist-desktop
 files:
-  - ../../frontend/dist/**/*
   - ./main.js
   - ./preload.js
 extraResources:
+  - from: ../../frontend/dist
+    to: frontend
   - from: ../../backend/dist
     to: backend
 win:
