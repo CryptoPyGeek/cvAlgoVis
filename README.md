@@ -223,3 +223,6 @@ GET /opencv-reference
 ## 联系方式
 
 ![微信公众号](frontend/public/samples/contact.png)
+
+如果大家不想自己编译，可以
+关注微信公众号后回复：cvAlgoVis 0.1.0，免费获取cvAlgoVis 0.1.0 软件（单一exe软件可直接打开）
