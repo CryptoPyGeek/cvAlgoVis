@@ -1,6 +1,7 @@
+import json
 import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
@@ -11,12 +12,15 @@ from app.examples.code_snippets import ALGORITHM_SNIPPETS
 from app.schemas import (
     CatalogResponse,
     CodeSnippetResponse,
+    Open3DProcessRequest,
+    Open3DProcessResponse,
     ProcessMeta,
     ProcessRequest,
     ProcessResponse,
 )
 from app.services.image_io import decode_image_from_base64, encode_image_to_base64
 from app.services.opencv_reference import OPENCV_FUNCTION_REFERENCE
+from app.services.open3d_pipeline import process_point_cloud_file
 from app.services.pipeline import process_image
 
 
@@ -85,5 +89,32 @@ def process(payload: ProcessRequest):
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"{exc} [request_id={request_id}]") from exc
+    except Exception as exc:  # pragma: no cover
+        raise HTTPException(status_code=500, detail=f"Internal error [request_id={request_id}]") from exc
+
+
+@app.post("/open3d/process", response_model=Open3DProcessResponse)
+async def process_open3d(
+    algorithm_id: str = Form(...),
+    params: str = Form("{}"),
+    file: UploadFile = File(...),
+):
+    request_id = str(uuid.uuid4())
+    try:
+        parsed_params = json.loads(params)
+        if not isinstance(parsed_params, dict):
+            raise ValueError("params must be a JSON object.")
+
+        payload = Open3DProcessRequest(
+            algorithm_id=algorithm_id,
+            params=parsed_params,
+            filename=file.filename or "point-cloud.ply",
+        )
+        file_bytes = await file.read()
+        return process_point_cloud_file(payload, file_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{exc} [request_id={request_id}]") from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=f"{exc} [request_id={request_id}]") from exc
     except Exception as exc:  # pragma: no cover
         raise HTTPException(status_code=500, detail=f"Internal error [request_id={request_id}]") from exc

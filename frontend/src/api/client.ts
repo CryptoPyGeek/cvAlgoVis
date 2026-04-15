@@ -1,4 +1,4 @@
-import type { CatalogResponse, ProcessResponse } from "../types";
+import type { CatalogResponse, Open3DProcessResponse, ProcessResponse } from "../types";
 import { getApiBase } from "../config/runtime";
 
 const API_BASE = getApiBase();
@@ -66,6 +66,27 @@ export async function processImage(payload: {
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "处理失败");
+  }
+  return res.json();
+}
+
+export async function processOpen3D(payload: {
+  algorithm_id: string;
+  params: Record<string, number>;
+  file: File;
+}): Promise<Open3DProcessResponse> {
+  const formData = new FormData();
+  formData.append("algorithm_id", payload.algorithm_id);
+  formData.append("params", JSON.stringify(payload.params));
+  formData.append("file", payload.file);
+
+  const res = await fetch(`${API_BASE}/open3d/process`, {
+    method: "POST",
+    body: formData
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Open3D 处理失败");
   }
   return res.json();
 }

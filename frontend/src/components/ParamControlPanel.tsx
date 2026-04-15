@@ -23,7 +23,15 @@ const PARAM_HINTS: Record<string, string> = {
   block_size: "自适应阈值窗口大小。",
   c: "自适应阈值偏置常量。",
   nfeatures: "目标特征点数量上限。",
-  template_ratio: "模板大小占原图比例。"
+  template_ratio: "模板大小占原图比例。",
+  voxel_size: "体素边长：越大，下采样越明显。",
+  radius: "法线估计的邻域搜索半径。",
+  max_nn: "法线估计使用的最近邻点数量上限。",
+  nb_neighbors: "统计离群点分析时的邻域点数。",
+  std_ratio: "离群点判定的标准差比例阈值。",
+  distance_threshold: "点到平面的最大允许距离。",
+  ransac_n: "RANSAC 每次拟合平面抽样的点数。",
+  num_iterations: "RANSAC 最大迭代次数。"
 };
 
 function paramHint(param: ParamDef): string {

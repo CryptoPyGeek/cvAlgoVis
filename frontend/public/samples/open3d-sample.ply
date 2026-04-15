@@ -1,0 +1,26 @@
+ply
+format ascii 1.0
+comment cvAlgoVis Open3D sample point cloud
+element vertex 18
+property float x
+property float y
+property float z
+end_header
+0 0 0
+0.1 0 0
+0.2 0 0
+0 0.1 0
+0.1 0.1 0
+0.2 0.1 0
+0 0.2 0
+0.1 0.2 0
+0.2 0.2 0
+0.05 0.05 0.01
+0.15 0.05 0.01
+0.05 0.15 0.01
+0.15 0.15 0.01
+0.08 0.08 0.25
+0.18 0.1 0.28
+0.04 0.18 0.23
+0.22 0.22 0.3
+0.12 0.24 0.27

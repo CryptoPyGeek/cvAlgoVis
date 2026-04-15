@@ -25,6 +25,8 @@ export type LibraryDef = {
   id: string;
   name: string;
   enabled: boolean;
+  input_kind?: "image" | "point_cloud";
+  status_note?: string;
   modules: ModuleDef[];
 };
 
@@ -40,4 +42,20 @@ export type ProcessResponse = {
     height: number;
     algorithm: string;
   };
+};
+
+export type Open3DProcessResponse = {
+  result_kind: "point_cloud_summary";
+  summary: string;
+  meta: {
+    elapsed_ms: number;
+    algorithm: string;
+    filename: string;
+    file_type: string;
+    points_before: number;
+    points_after: number;
+  };
+  stats: Record<string, string | number | boolean | number[]>;
+  source_points: [number, number, number][];
+  processed_points: [number, number, number][];
 };

@@ -104,4 +104,20 @@ H, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 proj = cv2.perspectiveTransform(corners, H)""",
     "sharpen": """kernel = np.array([[0, -1, 0], [-1, 5 + amount, -1], [0, -1, 0]], dtype=np.float32)
 result = cv2.filter2D(image, ddepth=-1, kernel=kernel)""",
+    "voxel_down_sample": """pcd = o3d.io.read_point_cloud(path)
+down = pcd.voxel_down_sample(voxel_size=voxel_size)""",
+    "estimate_normals": """pcd = o3d.io.read_point_cloud(path)
+pcd.estimate_normals(
+    search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
+)""",
+    "remove_statistical_outlier": """pcd = o3d.io.read_point_cloud(path)
+filtered, ind = pcd.remove_statistical_outlier(
+    nb_neighbors=nb_neighbors, std_ratio=std_ratio
+)""",
+    "segment_plane": """pcd = o3d.io.read_point_cloud(path)
+plane_model, inliers = pcd.segment_plane(
+    distance_threshold=distance_threshold,
+    ransac_n=ransac_n,
+    num_iterations=num_iterations,
+)""",
 }

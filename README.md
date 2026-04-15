@@ -1,6 +1,6 @@
 # cvAlgoVis
 
-一个可交互的计算机视觉实验应用：前端实时调参，后端基于 OpenCV 处理图像并返回结果。
+一个可交互的计算机视觉实验应用：前端实时调参，后端支持 `OpenCV` 图像处理与 `Open3D` 点云基础处理，并通过独立接口分别返回结果。
 
 ## 功能概览
 
@@ -21,9 +21,11 @@
   - 匹配与检索（KNN、BF、FLANN、模板匹配、模板匹配+同源）
 - 参数交互：滑块 + 数值输入 + 鼠标滚轮微调
 - 实时反馈：前端节流调用 `/process`
+- 多库独立：`OpenCV` 继续使用图像工作流，`Open3D` 使用点云文件工作流
 - 开发辅助：算法 Python 代码片段 + OpenCV 函数说明
 - 代码高亮：后端 Pygments 生成，主题为 Monokai
 - 默认样例图：`frontend/public/samples/contact.png`
+- Open3D 首版支持：`ply` / `pcd` 点云文件，当前返回处理摘要与统计信息
 
 ## 界面截图
 
@@ -42,7 +44,7 @@
 ## 技术栈
 
 - 前端：React + TypeScript + Vite
-- 后端：FastAPI + OpenCV + NumPy
+- 后端：FastAPI + OpenCV + Open3D + NumPy
 - 测试：Pytest（单元 + 集成）
 
 ## 当前目录结构（与项目现状一致）

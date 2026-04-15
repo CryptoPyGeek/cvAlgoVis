@@ -6,6 +6,8 @@ from app.services.algorithms import ALGORITHM_HANDLERS
 
 
 def process_image(library_id: str, algorithm_id: str, image: np.ndarray, params: dict):
+    if library_id == "open3d":
+        raise ValueError("Open3D requests must use the dedicated /open3d/process endpoint.")
     if library_id != "opencv":
         raise ValueError(f"Unsupported library: {library_id}")
     handler = ALGORITHM_HANDLERS.get(algorithm_id)

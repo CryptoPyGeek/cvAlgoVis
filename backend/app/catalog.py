@@ -3,8 +3,11 @@ from copy import deepcopy
 from app.examples.code_snippets import ALGORITHM_SNIPPETS
 
 
-def p(name: str, min_v: float, max_v: float, step: float, default: float):
-    return {"name": name, "type": "number", "min": min_v, "max": max_v, "step": step, "default": default}
+def p(name: str, min_v: float, max_v: float, step: float, default: float, description: str | None = None):
+    payload = {"name": name, "type": "number", "min": min_v, "max": max_v, "step": step, "default": default}
+    if description:
+        payload["description"] = description
+    return payload
 
 
 CATALOG = {
@@ -13,6 +16,7 @@ CATALOG = {
             "id": "opencv",
             "name": "OpenCV",
             "enabled": True,
+            "input_kind": "image",
             "modules": [
                 {
                     "id": "color_intensity",
@@ -164,8 +168,47 @@ CATALOG = {
         {
             "id": "open3d",
             "name": "Open3D",
-            "enabled": False,
-            "modules": [],
+            "enabled": True,
+            "input_kind": "point_cloud",
+            "status_note": "首版支持 ply / pcd 点云文件，结果以处理摘要与统计信息展示。",
+            "modules": [
+                {
+                    "id": "point_cloud_basic",
+                    "name": "点云基础处理",
+                    "algorithms": [
+                        {
+                            "id": "voxel_down_sample",
+                            "name": "体素下采样",
+                            "params": [p("voxel_size", 0.001, 1.0, 0.001, 0.05, "体素边长，越大采样越粗。")],
+                        },
+                        {
+                            "id": "estimate_normals",
+                            "name": "法线估计",
+                            "params": [
+                                p("radius", 0.01, 5.0, 0.01, 0.2, "邻域搜索半径。"),
+                                p("max_nn", 5, 200, 1, 30, "参与估计的最近邻点上限。"),
+                            ],
+                        },
+                        {
+                            "id": "remove_statistical_outlier",
+                            "name": "统计离群点去除",
+                            "params": [
+                                p("nb_neighbors", 5, 200, 1, 20, "统计分析时的邻居数量。"),
+                                p("std_ratio", 0.1, 5.0, 0.1, 2.0, "标准差阈值比例。"),
+                            ],
+                        },
+                        {
+                            "id": "segment_plane",
+                            "name": "平面分割",
+                            "params": [
+                                p("distance_threshold", 0.001, 1.0, 0.001, 0.02, "点到平面的最大内点距离。"),
+                                p("ransac_n", 3, 10, 1, 3, "拟合平面所需采样点数。"),
+                                p("num_iterations", 10, 5000, 10, 1000, "RANSAC 迭代次数。"),
+                            ],
+                        },
+                    ],
+                }
+            ],
         },
     ]
 }

@@ -97,6 +97,12 @@ button.small {
   gap: 12px;
 }
 
+.workspace-open3d {
+  grid-template-columns: minmax(0, 1.7fr) minmax(340px, 0.9fr);
+  grid-template-rows: minmax(360px, 1fr) minmax(280px, 0.85fr);
+  min-height: calc(100vh - 132px);
+}
+
 .cell {
   min-height: 0;
 }
@@ -121,6 +127,21 @@ button.small {
   grid-row: 2;
 }
 
+.workspace-open3d .cell-result {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.workspace-open3d .cell-params {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.workspace-open3d .cell-code {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .code-panel,
 .preview-panel,
 .control-panel {
@@ -128,6 +149,12 @@ button.small {
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 8px;
+}
+
+.open3d-preview-panel {
+  height: 100%;
+  grid-template-rows: auto auto minmax(520px, 1fr) auto auto;
+  align-content: stretch;
 }
 
 .panel-title {
@@ -198,6 +225,139 @@ pre {
   min-height: 0;
 }
 
+.info-card {
+  min-height: 0;
+  height: 100%;
+  background: #0d1016;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: auto;
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.info-line {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.point-cloud-card {
+  min-height: 0;
+  height: 100%;
+  min-height: 520px;
+  background: #0d1016;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.point-cloud-empty {
+  min-height: 0;
+  height: 100%;
+  background: #0d1016;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.point-cloud-details {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.point-cloud-details.compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  max-height: 76px;
+  overflow: auto;
+  align-content: start;
+}
+
+.point-cloud-detail-line {
+  word-break: break-word;
+}
+
+.point-cloud-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.legend-source {
+  background: #4da3ff;
+}
+
+.legend-processed {
+  background: #ffd84d;
+}
+
+.point-cloud-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.point-cloud-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.point-cloud-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mode-active {
+  background: rgba(79, 140, 255, 0.16) !important;
+  border-color: var(--accent) !important;
+}
+
+.point-scale-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.point-scale-control input[type="range"] {
+  width: 180px;
+}
+
 .image-title {
   font-size: 12px;
   color: var(--muted);
@@ -223,6 +383,8 @@ pre {
 .preview-meta {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: var(--muted);
 }
@@ -278,5 +440,17 @@ pre {
   .cell-code {
     grid-column: 1;
     grid-row: auto;
+  }
+
+  .workspace-open3d {
+    min-height: auto;
+  }
+
+  .open3d-preview-panel {
+    grid-template-rows: auto auto minmax(420px, 1fr) auto auto;
+  }
+
+  .point-cloud-card {
+    min-height: 420px;
   }
 }
