@@ -161,26 +161,42 @@ pytest -q
 
 ## 桌面软件打包
 
-项目已提供基于 `Electron + Python sidecar` 的桌面化方案，可打包为用户双击即可运行的软件。
+项目已提供基于 `Electron + Python sidecar` 的 **Windows 一键自动化打包**流程，默认输出可双击运行的便携版 EXE。
 
 相关文件：
 
 - `desktop/electron/`
 - `backend/entry.py`
 - `backend/pyinstaller.spec`
+- `scripts/build-desktop-win.ps1`
+- `scripts/smoke-test-desktop.ps1`
 - `docs/desktop-packaging.md`
 
-根目录一键构建命令：
+推荐命令：
 
 ```bash
 npm run build:desktop
 ```
 
+该命令会自动执行：
+
+1. 清理旧构建产物
+2. 构建前端静态资源
+3. 打包后端 sidecar
+4. 复用本地 Electron 发行版打出 Windows portable EXE
+5. 执行桌面包自检
+
+默认产物位置：
+
+- `dist-desktop/cvAlgoVis 0.1.0.exe`
+- `dist-desktop/win-unpacked/cvAlgoVis.exe`
+
 说明：
 
-- Windows 目标产物：`.exe`
-- macOS 目标产物：`.app / .dmg`
+- 当前默认自动化目标为 Windows
+- 软件启动后会自动拉起静默后端，不弹黑框
 - 前端会在桌面模式下自动读取运行时注入的 API 地址，不再写死开发地址
+- `dist-desktop/`、`backend/dist/`、`backend/build/`、`.runtime/` 为构建或运行期产物，不需要手工提交
 
 ## OpenCV 函数清单（用途/参数/返回值）
 
