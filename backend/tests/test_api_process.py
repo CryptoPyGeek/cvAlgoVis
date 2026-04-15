@@ -33,6 +33,10 @@ def test_catalog():
     assert open3d_library is not None
     assert open3d_library["input_kind"] == "point_cloud"
     assert open3d_library["modules"][0]["id"] == "point_cloud_basic"
+    filter_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_filter_sampling"), None)
+    assert filter_module is not None
+    filter_algorithm_ids = {item["id"] for item in filter_module["algorithms"]}
+    assert {"uniform_down_sample", "random_down_sample", "remove_radius_outlier", "crop_axis_aligned_bbox"} <= filter_algorithm_ids
 
 
 def test_process_canny_success():
@@ -152,3 +156,36 @@ def test_open3d_process_success(monkeypatch):
     assert payload["meta"]["file_type"] == "ply"
     assert payload["source_points"] == [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]]
     assert payload["processed_points"] == [[0.0, 0.0, 0.0]]
+
+
+def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes):
+        assert payload.algorithm_id == "uniform_down_sample"
+        assert payload.params["every_k_points"] == 4
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "点云处理完成，点数从 100 变为 25。",
+            "meta": {
+                "elapsed_ms": 8,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "file_type": "ply",
+                "points_before": 100,
+                "points_after": 25,
+            },
+            "stats": {"every_k_points": 4},
+            "source_points": [[0.0, 0.0, 0.0], [0.2, 0.0, 0.0]],
+            "processed_points": [[0.0, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={"algorithm_id": "uniform_down_sample", "params": '{"every_k_points": 4}'},
+        files={"file": ("cloud.ply", b"ply-data", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "uniform_down_sample"
+    assert payload["stats"]["every_k_points"] == 4

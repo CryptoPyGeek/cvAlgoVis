@@ -32,6 +32,16 @@ const PARAM_HINTS: Record<string, string> = {
   distance_threshold: "点到平面的最大允许距离。",
   ransac_n: "RANSAC 每次拟合平面抽样的点数。",
   num_iterations: "RANSAC 最大迭代次数。"
+  ,
+  every_k_points: "均匀下采样保留步长，越大保留的点越少。",
+  sampling_ratio: "随机保留点比例，越小采样越稀疏。",
+  nb_points: "半径离群点去除要求的最少邻居点数。",
+  min_x: "包围盒最小 X 边界。",
+  min_y: "包围盒最小 Y 边界。",
+  min_z: "包围盒最小 Z 边界。",
+  max_x: "包围盒最大 X 边界。",
+  max_y: "包围盒最大 Y 边界。",
+  max_z: "包围盒最大 Z 边界。"
 };
 
 function paramHint(param: ParamDef): string {

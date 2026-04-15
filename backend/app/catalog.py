@@ -207,6 +207,42 @@ CATALOG = {
                             ],
                         },
                     ],
+                },
+                {
+                    "id": "point_cloud_filter_sampling",
+                    "name": "点云过滤采样",
+                    "algorithms": [
+                        {
+                            "id": "uniform_down_sample",
+                            "name": "均匀下采样",
+                            "params": [p("every_k_points", 2, 100, 1, 5, "每隔 k 个点保留一个点。")],
+                        },
+                        {
+                            "id": "random_down_sample",
+                            "name": "随机下采样",
+                            "params": [p("sampling_ratio", 0.05, 1.0, 0.01, 0.5, "随机保留点的比例。")],
+                        },
+                        {
+                            "id": "remove_radius_outlier",
+                            "name": "半径离群点去除",
+                            "params": [
+                                p("nb_points", 1, 100, 1, 8, "半径范围内最少邻居点数。"),
+                                p("radius", 0.001, 2.0, 0.001, 0.12, "邻域统计半径。"),
+                            ],
+                        },
+                        {
+                            "id": "crop_axis_aligned_bbox",
+                            "name": "轴对齐包围盒裁剪",
+                            "params": [
+                                p("min_x", -2.0, 2.0, 0.01, -0.25, "裁剪盒最小 X。"),
+                                p("min_y", -2.0, 2.0, 0.01, -0.25, "裁剪盒最小 Y。"),
+                                p("min_z", -2.0, 2.0, 0.01, -0.25, "裁剪盒最小 Z。"),
+                                p("max_x", -2.0, 2.0, 0.01, 0.25, "裁剪盒最大 X。"),
+                                p("max_y", -2.0, 2.0, 0.01, 0.25, "裁剪盒最大 Y。"),
+                                p("max_z", -2.0, 2.0, 0.01, 0.25, "裁剪盒最大 Z。"),
+                            ],
+                        },
+                    ],
                 }
             ],
         },

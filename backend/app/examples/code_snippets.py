@@ -114,6 +114,20 @@ pcd.estimate_normals(
 filtered, ind = pcd.remove_statistical_outlier(
     nb_neighbors=nb_neighbors, std_ratio=std_ratio
 )""",
+    "uniform_down_sample": """pcd = o3d.io.read_point_cloud(path)
+down = pcd.uniform_down_sample(every_k_points=every_k_points)""",
+    "random_down_sample": """pcd = o3d.io.read_point_cloud(path)
+down = pcd.random_down_sample(sampling_ratio=sampling_ratio)""",
+    "remove_radius_outlier": """pcd = o3d.io.read_point_cloud(path)
+filtered, ind = pcd.remove_radius_outlier(
+    nb_points=nb_points, radius=radius
+)""",
+    "crop_axis_aligned_bbox": """pcd = o3d.io.read_point_cloud(path)
+bbox = o3d.geometry.AxisAlignedBoundingBox(
+    min_bound=[min_x, min_y, min_z],
+    max_bound=[max_x, max_y, max_z],
+)
+cropped = pcd.crop(bbox)""",
     "segment_plane": """pcd = o3d.io.read_point_cloud(path)
 plane_model, inliers = pcd.segment_plane(
     distance_threshold=distance_threshold,
