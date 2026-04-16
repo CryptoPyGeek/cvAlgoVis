@@ -320,6 +320,10 @@ pre {
   background: #ffd84d;
 }
 
+.legend-target {
+  background: #47d7ac;
+}
+
 .point-cloud-toolbar {
   display: flex;
   align-items: center;

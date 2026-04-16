@@ -51,11 +51,13 @@ export type Open3DProcessResponse = {
     elapsed_ms: number;
     algorithm: string;
     filename: string;
+    target_filename?: string | null;
     file_type: string;
     points_before: number;
     points_after: number;
   };
   stats: Record<string, string | number | boolean | number[]>;
   source_points: [number, number, number][];
+  target_points: [number, number, number][];
   processed_points: [number, number, number][];
 };

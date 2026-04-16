@@ -26,12 +26,14 @@ class Open3DProcessRequest(BaseModel):
     algorithm_id: str = Field(description="Open3D algorithm id.")
     params: dict[str, float | int] = Field(default_factory=dict)
     filename: str = Field(description="Original uploaded point-cloud filename.")
+    target_filename: str | None = Field(default=None, description="Optional target point-cloud filename.")
 
 
 class Open3DProcessMeta(BaseModel):
     elapsed_ms: int
     algorithm: str
     filename: str
+    target_filename: str | None = None
     file_type: str
     points_before: int
     points_after: int
@@ -43,6 +45,7 @@ class Open3DProcessResponse(BaseModel):
     meta: Open3DProcessMeta
     stats: dict[str, Any] = Field(default_factory=dict)
     source_points: list[list[float]] = Field(default_factory=list)
+    target_points: list[list[float]] = Field(default_factory=list)
     processed_points: list[list[float]] = Field(default_factory=list)
 
 

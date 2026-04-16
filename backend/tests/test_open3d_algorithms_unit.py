@@ -6,9 +6,12 @@ o3d = pytest.importorskip("open3d")
 from app.services.open3d_algorithms import (
     cluster_dbscan,
     compute_convex_hull,
+    evaluate_registration,
     get_axis_aligned_bounding_box,
     hidden_point_removal,
+    registration_icp_point_to_point,
     segment_plane_outliers,
+    transform_point_cloud,
 )
 
 
@@ -58,6 +61,34 @@ def sample_shape_cloud():
     )
 
 
+def sample_registration_pair():
+    source = make_point_cloud(
+        [
+            [-0.30, -0.10, 0.00],
+            [-0.10, -0.10, 0.00],
+            [0.10, -0.10, 0.00],
+            [0.30, -0.10, 0.00],
+            [-0.30, 0.10, 0.00],
+            [-0.10, 0.10, 0.08],
+            [0.10, 0.10, 0.08],
+            [0.30, 0.10, 0.00],
+        ]
+    )
+    target = make_point_cloud(
+        [
+            [-0.18, -0.12, 0.00],
+            [0.02, -0.12, 0.00],
+            [0.22, -0.12, 0.00],
+            [0.42, -0.12, 0.00],
+            [-0.18, 0.08, 0.00],
+            [0.02, 0.08, 0.08],
+            [0.22, 0.08, 0.08],
+            [0.42, 0.08, 0.00],
+        ]
+    )
+    return source, target
+
+
 def test_cluster_dbscan_returns_cluster_summary():
     processed, stats = cluster_dbscan(sample_cluster_cloud(), {"eps": 0.08, "min_points": 3})
     assert len(processed.points) >= 3
@@ -97,3 +128,33 @@ def test_convex_hull_returns_hull_vertices():
     processed, stats = compute_convex_hull(sample_shape_cloud(), {"joggle_inputs": 0})
     assert len(processed.points) == stats["hull_vertex_count"]
     assert stats["triangle_count"] > 0
+
+
+def test_transform_point_cloud_changes_positions():
+    source, _ = sample_registration_pair()
+    processed, stats = transform_point_cloud(source, {"tx": 0.1, "ty": 0.0, "tz": 0.0, "yaw_deg": 0})
+    source_points = np.asarray(source.points)
+    processed_points = np.asarray(processed.points)
+    assert not np.allclose(source_points, processed_points)
+    assert pytest.approx(stats["transformation"][0][3], rel=1e-6) == 0.1
+
+
+def test_registration_icp_point_to_point_returns_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_icp_point_to_point(
+        source,
+        target,
+        {"max_correspondence_distance": 0.5, "max_iteration": 50},
+    )
+    assert len(processed.points) == len(source.points)
+    assert "fitness" in stats
+    assert "inlier_rmse" in stats
+    assert len(stats["transformation"]) == 4
+
+
+def test_evaluate_registration_reports_summary_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = evaluate_registration(source, target, {"max_correspondence_distance": 0.5})
+    assert len(processed.points) == len(source.points)
+    assert stats["fitness"] >= 0
+    assert stats["correspondence_set_size"] >= 0

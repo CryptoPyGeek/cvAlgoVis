@@ -45,6 +45,10 @@ def test_catalog():
     assert geometry_module is not None
     geometry_algorithm_ids = {item["id"] for item in geometry_module["algorithms"]}
     assert {"get_axis_aligned_bounding_box", "get_oriented_bounding_box", "compute_convex_hull", "compute_mahalanobis_distance"} <= geometry_algorithm_ids
+    registration_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_registration"), None)
+    assert registration_module is not None
+    registration_algorithm_ids = {item["id"] for item in registration_module["algorithms"]}
+    assert {"transform_point_cloud", "registration_icp_point_to_point", "evaluate_registration"} <= registration_algorithm_ids
 
 
 def test_process_canny_success():
@@ -130,10 +134,11 @@ def test_open3d_process_rejects_invalid_extension():
 
 
 def test_open3d_process_success(monkeypatch):
-    def fake_process_point_cloud_file(payload, file_bytes):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
         assert payload.algorithm_id == "voxel_down_sample"
         assert payload.filename == "cloud.ply"
         assert file_bytes == b"ply-data"
+        assert target_file_bytes is None
         return {
             "result_kind": "point_cloud_summary",
             "summary": "点云处理完成，点数从 120 变为 48。",
@@ -167,9 +172,10 @@ def test_open3d_process_success(monkeypatch):
 
 
 def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
-    def fake_process_point_cloud_file(payload, file_bytes):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
         assert payload.algorithm_id == "uniform_down_sample"
         assert payload.params["every_k_points"] == 4
+        assert target_file_bytes is None
         return {
             "result_kind": "point_cloud_summary",
             "summary": "点云处理完成，点数从 100 变为 25。",
@@ -200,10 +206,11 @@ def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
 
 
 def test_open3d_process_new_segmentation_algorithm(monkeypatch):
-    def fake_process_point_cloud_file(payload, file_bytes):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
         assert payload.algorithm_id == "cluster_dbscan"
         assert payload.params["eps"] == 0.12
         assert payload.params["min_points"] == 6
+        assert target_file_bytes is None
         return {
             "result_kind": "point_cloud_summary",
             "summary": "聚类完成，识别出 2 个簇。",
@@ -231,3 +238,78 @@ def test_open3d_process_new_segmentation_algorithm(monkeypatch):
     payload = response.json()
     assert payload["meta"]["algorithm"] == "cluster_dbscan"
     assert payload["stats"]["cluster_count"] == 2
+
+
+def test_open3d_process_transform_algorithm(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "transform_point_cloud"
+        assert payload.params["tx"] == 0.15
+        assert target_file_bytes is None
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "点云变换完成。",
+            "meta": {
+                "elapsed_ms": 6,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": None,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"transformation": [[1, 0, 0, 0.15], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [],
+            "processed_points": [[0.15, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={"algorithm_id": "transform_point_cloud", "params": '{"tx": 0.15, "ty": 0, "tz": 0, "roll_deg": 0, "pitch_deg": 0, "yaw_deg": 0}'},
+        files={"file": ("cloud.ply", b"ply-data", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "transform_point_cloud"
+    assert payload["processed_points"] == [[0.15, 0.0, 0.0]]
+
+
+def test_open3d_process_registration_algorithm_with_target(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "registration_icp_point_to_point"
+        assert payload.target_filename == "target.ply"
+        assert target_file_bytes == b"target-data"
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "ICP 配准完成。",
+            "meta": {
+                "elapsed_ms": 12,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": payload.target_filename,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"fitness": 0.98, "inlier_rmse": 0.01},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [[0.2, 0.0, 0.0]],
+            "processed_points": [[0.19, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={"algorithm_id": "registration_icp_point_to_point", "params": '{"max_correspondence_distance": 0.18, "max_iteration": 40}'},
+        files={
+            "file": ("source.ply", b"source-data", "application/octet-stream"),
+            "target_file": ("target.ply", b"target-data", "application/octet-stream"),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["target_filename"] == "target.ply"
+    assert payload["target_points"] == [[0.2, 0.0, 0.0]]

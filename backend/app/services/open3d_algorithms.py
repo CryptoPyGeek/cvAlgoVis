@@ -19,6 +19,28 @@ def _copy_cloud(cloud):
     return deepcopy(cloud)
 
 
+def _transformation_matrix(params: dict[str, Any]) -> np.ndarray:
+    tx = float(params.get("tx", 0.0))
+    ty = float(params.get("ty", 0.0))
+    tz = float(params.get("tz", 0.0))
+    roll = np.deg2rad(float(params.get("roll_deg", 0.0)))
+    pitch = np.deg2rad(float(params.get("pitch_deg", 0.0)))
+    yaw = np.deg2rad(float(params.get("yaw_deg", 0.0)))
+
+    cx, sx = np.cos(roll), np.sin(roll)
+    cy, sy = np.cos(pitch), np.sin(pitch)
+    cz, sz = np.cos(yaw), np.sin(yaw)
+
+    rx = np.array([[1.0, 0.0, 0.0], [0.0, cx, -sx], [0.0, sx, cx]])
+    ry = np.array([[cy, 0.0, sy], [0.0, 1.0, 0.0], [-sy, 0.0, cy]])
+    rz = np.array([[cz, -sz, 0.0], [sz, cz, 0.0], [0.0, 0.0, 1.0]])
+
+    transform = np.eye(4, dtype=np.float64)
+    transform[:3, :3] = rz @ ry @ rx
+    transform[:3, 3] = np.array([tx, ty, tz], dtype=np.float64)
+    return transform
+
+
 def _points_to_cloud(points):
     o3d = _require_open3d()
     output = o3d.geometry.PointCloud()
@@ -229,6 +251,54 @@ def compute_mahalanobis_distance(cloud, params: dict[str, Any]):
     return processed, stats
 
 
+def transform_point_cloud(cloud, params: dict[str, Any]):
+    processed = _copy_cloud(cloud)
+    transform = _transformation_matrix(params)
+    processed.transform(transform)
+    return processed, {"transformation": transform.tolist()}
+
+
+def registration_icp_point_to_point(source_cloud, target_cloud, params: dict[str, Any]):
+    o3d = _require_open3d()
+    max_correspondence_distance = float(params.get("max_correspondence_distance", 0.18))
+    max_iteration = int(params.get("max_iteration", 40))
+    result = o3d.pipelines.registration.registration_icp(
+        source_cloud,
+        target_cloud,
+        max_correspondence_distance,
+        np.eye(4, dtype=np.float64),
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=max_iteration),
+    )
+    processed = _copy_cloud(source_cloud)
+    processed.transform(result.transformation)
+    return processed, {
+        "max_correspondence_distance": max_correspondence_distance,
+        "max_iteration": max_iteration,
+        "fitness": float(result.fitness),
+        "inlier_rmse": float(result.inlier_rmse),
+        "transformation": np.asarray(result.transformation, dtype=np.float64).tolist(),
+    }
+
+
+def evaluate_registration(source_cloud, target_cloud, params: dict[str, Any]):
+    o3d = _require_open3d()
+    max_correspondence_distance = float(params.get("max_correspondence_distance", 0.18))
+    evaluation = o3d.pipelines.registration.evaluate_registration(
+        source_cloud,
+        target_cloud,
+        max_correspondence_distance,
+        np.eye(4, dtype=np.float64),
+    )
+    processed = _copy_cloud(source_cloud)
+    return processed, {
+        "max_correspondence_distance": max_correspondence_distance,
+        "fitness": float(evaluation.fitness),
+        "inlier_rmse": float(evaluation.inlier_rmse),
+        "correspondence_set_size": int(len(evaluation.correspondence_set)),
+    }
+
+
 def segment_plane(cloud, params: dict[str, Any]):
     distance_threshold = float(params.get("distance_threshold", 0.02))
     ransac_n = int(params.get("ransac_n", 3))
@@ -263,5 +333,8 @@ OPEN3D_ALGORITHM_HANDLERS = {
     "get_oriented_bounding_box": get_oriented_bounding_box,
     "compute_convex_hull": compute_convex_hull,
     "compute_mahalanobis_distance": compute_mahalanobis_distance,
+    "transform_point_cloud": transform_point_cloud,
+    "registration_icp_point_to_point": registration_icp_point_to_point,
+    "evaluate_registration": evaluate_registration,
     "segment_plane": segment_plane,
 }

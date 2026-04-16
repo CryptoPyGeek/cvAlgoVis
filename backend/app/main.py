@@ -98,6 +98,7 @@ async def process_open3d(
     algorithm_id: str = Form(...),
     params: str = Form("{}"),
     file: UploadFile = File(...),
+    target_file: UploadFile | None = File(default=None),
 ):
     request_id = str(uuid.uuid4())
     try:
@@ -109,9 +110,11 @@ async def process_open3d(
             algorithm_id=algorithm_id,
             params=parsed_params,
             filename=file.filename or "point-cloud.ply",
+            target_filename=target_file.filename if target_file and target_file.filename else None,
         )
         file_bytes = await file.read()
-        return process_point_cloud_file(payload, file_bytes)
+        target_file_bytes = await target_file.read() if target_file else None
+        return process_point_cloud_file(payload, file_bytes, target_file_bytes)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"{exc} [request_id={request_id}]") from exc
     except RuntimeError as exc:

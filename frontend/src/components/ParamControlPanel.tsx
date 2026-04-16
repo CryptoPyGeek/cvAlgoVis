@@ -48,7 +48,13 @@ const PARAM_HINTS: Record<string, string> = {
   camera_y: "隐藏点移除观察点的 Y 坐标。",
   camera_z: "隐藏点移除观察点的 Z 坐标。",
   robust: "是否启用鲁棒有向包围盒估计。",
-  joggle_inputs: "是否对输入点做微扰以避免凸包退化。"
+  joggle_inputs: "是否对输入点做微扰以避免凸包退化。",
+  tz: "Z 方向平移量。",
+  roll_deg: "绕 X 轴旋转角度。",
+  pitch_deg: "绕 Y 轴旋转角度。",
+  yaw_deg: "绕 Z 轴旋转角度。",
+  max_correspondence_distance: "源点与目标点建立对应关系的最大距离。",
+  max_iteration: "ICP 迭代次数上限。"
 };
 
 function paramHint(param: ParamDef): string {

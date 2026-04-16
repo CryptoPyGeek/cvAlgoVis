@@ -2,6 +2,7 @@ export type Open3DSampleDef = {
   id: string;
   label: string;
   file: string;
+  targetFile?: string;
   description: string;
   recommendedAlgorithms: string[];
 };
@@ -9,6 +10,14 @@ export type Open3DSampleDef = {
 const samplePath = (file: string) => `${import.meta.env.BASE_URL}samples/${file}`;
 
 export const OPEN3D_SAMPLES: Open3DSampleDef[] = [
+  {
+    id: "registration-pair",
+    label: "配准点云对",
+    file: samplePath("open3d-registration-source.ply"),
+    targetFile: samplePath("open3d-registration-target.ply"),
+    description: "成对的源点云与目标点云，适合演示刚体变换、ICP 点到点配准和配准质量评估。",
+    recommendedAlgorithms: ["transform_point_cloud", "registration_icp_point_to_point", "evaluate_registration"]
+  },
   {
     id: "plane-outliers",
     label: "平面 + 离群点",

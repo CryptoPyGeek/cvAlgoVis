@@ -302,6 +302,37 @@ CATALOG = {
                             "params": [],
                         },
                     ],
+                },
+                {
+                    "id": "point_cloud_registration",
+                    "name": "点云配准",
+                    "algorithms": [
+                        {
+                            "id": "transform_point_cloud",
+                            "name": "点云刚体变换",
+                            "params": [
+                                p("tx", -2.0, 2.0, 0.01, 0.15, "X 方向平移。"),
+                                p("ty", -2.0, 2.0, 0.01, 0.0, "Y 方向平移。"),
+                                p("tz", -2.0, 2.0, 0.01, 0.0, "Z 方向平移。"),
+                                p("roll_deg", -180, 180, 1, 0, "绕 X 轴旋转角度。"),
+                                p("pitch_deg", -180, 180, 1, 0, "绕 Y 轴旋转角度。"),
+                                p("yaw_deg", -180, 180, 1, 12, "绕 Z 轴旋转角度。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_icp_point_to_point",
+                            "name": "ICP 点到点配准",
+                            "params": [
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.18, "最大对应点距离阈值。"),
+                                p("max_iteration", 1, 200, 1, 40, "ICP 最大迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "evaluate_registration",
+                            "name": "配准质量评估",
+                            "params": [p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.18, "评估对应点距离阈值。")],
+                        },
+                    ],
                 }
             ],
         },

@@ -12,6 +12,10 @@ import { useDebouncedEffect } from "./hooks/useDebouncedEffect";
 import type { CatalogResponse, Open3DProcessResponse } from "./types";
 
 const SAMPLE_IMAGE = `${import.meta.env.BASE_URL}samples/contact.png`;
+const OPEN3D_REGISTRATION_ALGORITHMS = new Set([
+  "registration_icp_point_to_point",
+  "evaluate_registration"
+]);
 
 export default function App() {
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
@@ -24,7 +28,9 @@ export default function App() {
   const [sourceImageApi, setSourceImageApi] = useState<string>("");
   const [resultImage, setResultImage] = useState<string>("");
   const [open3dFile, setOpen3dFile] = useState<File | null>(null);
+  const [open3dTargetFile, setOpen3dTargetFile] = useState<File | null>(null);
   const [sampleOpen3dFile, setSampleOpen3dFile] = useState<File | null>(null);
+  const [sampleOpen3dTargetFile, setSampleOpen3dTargetFile] = useState<File | null>(null);
   const [selectedOpen3dSampleId, setSelectedOpen3dSampleId] = useState(OPEN3D_SAMPLES[0]?.id ?? "");
   const [open3dResult, setOpen3dResult] = useState<Open3DProcessResponse | null>(null);
   const [snippet, setSnippet] = useState<string>("# loading...");
@@ -59,6 +65,9 @@ export default function App() {
     if (!activeAlgorithm) return OPEN3D_SAMPLES[0];
     return OPEN3D_SAMPLES.find((sample) => sample.recommendedAlgorithms.includes(activeAlgorithm.id)) ?? OPEN3D_SAMPLES[0];
   }, [activeAlgorithm]);
+  const isRegistrationAlgorithm = activeAlgorithm
+    ? OPEN3D_REGISTRATION_ALGORITHMS.has(activeAlgorithm.id)
+    : false;
 
   function toDataUrl(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -149,6 +158,23 @@ export default function App() {
         setSampleOpen3dFile(sample);
       })
       .catch(() => null);
+
+    if (!selectedOpen3dSample.targetFile) {
+      setSampleOpen3dTargetFile(null);
+      return;
+    }
+
+    fetch(selectedOpen3dSample.targetFile)
+      .then((res) => {
+        if (!res.ok) throw new Error("sample target point cloud fetch failed");
+        return res.blob();
+      })
+      .then((blob) => {
+        const fileName = selectedOpen3dSample.targetFile?.split("/").pop() ?? `${selectedOpen3dSample.id}-target.ply`;
+        const sample = new File([blob], fileName, { type: "application/octet-stream" });
+        setSampleOpen3dTargetFile(sample);
+      })
+      .catch(() => setSampleOpen3dTargetFile(null));
   }, [selectedOpen3dSample]);
 
   useEffect(() => {
@@ -159,8 +185,12 @@ export default function App() {
 
   useEffect(() => {
     if (!isOpen3D || !sampleOpen3dFile) return;
+    if (isRegistrationAlgorithm && selectedOpen3dSample?.targetFile && !sampleOpen3dTargetFile) return;
     onPointCloudUpload(sampleOpen3dFile, `状态：已自动载入样例点云 ${sampleOpen3dFile.name}`);
-  }, [isOpen3D, sampleOpen3dFile]);
+    if (isRegistrationAlgorithm && sampleOpen3dTargetFile) {
+      onTargetPointCloudUpload(sampleOpen3dTargetFile, `状态：已自动载入目标点云 ${sampleOpen3dTargetFile.name}`);
+    }
+  }, [isOpen3D, isRegistrationAlgorithm, sampleOpen3dFile, sampleOpen3dTargetFile, selectedOpen3dSample]);
 
   useEffect(() => {
     if (!activeLibrary) return;
@@ -206,11 +236,16 @@ export default function App() {
           setStatusText("状态：请先上传点云文件");
           return;
         }
+        if (isRegistrationAlgorithm && !open3dTargetFile) {
+          setStatusText("状态：注册类算法请同时上传目标点云");
+          return;
+        }
         setStatusText("状态：Open3D Processing...");
         processOpen3D({
           algorithm_id: activeAlgorithm.id,
           params: paramValues,
-          file: open3dFile
+          file: open3dFile,
+          target_file: isRegistrationAlgorithm ? open3dTargetFile : undefined
         })
           .then((res) => {
             setOpen3dResult(res);
@@ -246,12 +281,16 @@ export default function App() {
     [
       libraryId,
       isOpen3D,
+      isRegistrationAlgorithm,
       activeAlgorithm?.id,
       JSON.stringify(paramValues),
       sourceImageApi,
       open3dFile?.name,
       open3dFile?.size,
-      open3dFile?.lastModified
+      open3dFile?.lastModified,
+      open3dTargetFile?.name,
+      open3dTargetFile?.size,
+      open3dTargetFile?.lastModified
     ],
     150
   );
@@ -276,12 +315,22 @@ export default function App() {
     setStatusText(message ?? `状态：已载入点云文件 ${file.name}`);
   }
 
+  function onTargetPointCloudUpload(file: File, message?: string) {
+    setOpen3dTargetFile(file);
+    setOpen3dResult(null);
+    setElapsedMs(0);
+    setStatusText(message ?? `状态：已载入目标点云 ${file.name}`);
+  }
+
   function loadSamplePointCloud() {
     if (!sampleOpen3dFile) {
       setStatusText("状态：样例点云加载失败");
       return;
     }
     onPointCloudUpload(sampleOpen3dFile);
+    if (isRegistrationAlgorithm && sampleOpen3dTargetFile) {
+      onTargetPointCloudUpload(sampleOpen3dTargetFile);
+    }
   }
 
   const open3dResultLines = useMemo(() => {
@@ -289,7 +338,7 @@ export default function App() {
       return [
         "等待 Open3D 处理结果。",
         "处理完成后会展示点数变化与算法统计信息。",
-        "首版不提供点云三维可视化，先返回摘要与元数据。"
+        isRegistrationAlgorithm ? "注册类算法需要同时提供源点云和目标点云。" : "支持在左侧三维视图中直接观察点云结果。"
       ];
     }
 
@@ -305,15 +354,21 @@ export default function App() {
       `文件类型：${open3dResult.meta.file_type}`,
       ...statsLines
     ];
-  }, [open3dResult]);
+  }, [isRegistrationAlgorithm, open3dResult]);
 
   const open3dOverlayLayers = useMemo(() => {
     if (!open3dResult) return [];
+    if (isRegistrationAlgorithm) {
+      return [
+        { points: open3dResult.target_points, color: "#47d7ac", size: 0.07 },
+        { points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }
+      ];
+    }
     return [
       { points: open3dResult.source_points, color: "#4da3ff", size: 0.06 },
       { points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }
     ];
-  }, [open3dResult]);
+  }, [isRegistrationAlgorithm, open3dResult]);
 
   const open3dProcessedLayers = useMemo(() => {
     if (!open3dResult) return [];
@@ -332,10 +387,18 @@ export default function App() {
 
   const open3dInfoLines = useMemo(() => {
     const fileLine = open3dFile
-      ? `文件：${open3dFile.name} · ${formatFileSize(open3dFile.size)}`
+      ? `源文件：${open3dFile.name} · ${formatFileSize(open3dFile.size)}`
       : sampleOpen3dFile
         ? `当前样例：${selectedOpen3dSample?.label ?? "未命名样例"}`
         : "内置样例点云加载中。";
+    const targetLine =
+      isRegistrationAlgorithm && open3dTargetFile
+        ? `目标文件：${open3dTargetFile.name} · ${formatFileSize(open3dTargetFile.size)}`
+        : isRegistrationAlgorithm && sampleOpen3dTargetFile
+          ? `目标样例：${sampleOpen3dTargetFile.name}`
+          : isRegistrationAlgorithm
+            ? "目标点云：请上传或使用配准样例。"
+            : null;
 
     const descriptionLine = selectedOpen3dSample
       ? `说明：${selectedOpen3dSample.description}`
@@ -348,8 +411,17 @@ export default function App() {
         ? `当前算法已匹配推荐样例：${activeAlgorithm.id}`
         : `当前算法：${activeAlgorithm?.id ?? "未选择"}`;
 
-    return [fileLine, descriptionLine, recommendedLine, matchedLine, ...open3dResultLines];
-  }, [activeAlgorithm, open3dFile, open3dResultLines, sampleOpen3dFile, selectedOpen3dSample]);
+    return [fileLine, targetLine, descriptionLine, recommendedLine, matchedLine, ...open3dResultLines].filter(Boolean) as string[];
+  }, [
+    activeAlgorithm,
+    isRegistrationAlgorithm,
+    open3dFile,
+    open3dResultLines,
+    open3dTargetFile,
+    sampleOpen3dFile,
+    sampleOpen3dTargetFile,
+    selectedOpen3dSample
+  ]);
 
   return (
     <div className="app-shell">
@@ -398,6 +470,21 @@ export default function App() {
               }}
             />
           </label>
+          {isOpen3D && isRegistrationAlgorithm ? (
+            <label className="upload">
+              上传目标点云
+              <input
+                type="file"
+                hidden
+                accept=".ply,.pcd"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  onTargetPointCloudUpload(file);
+                }}
+              />
+            </label>
+          ) : null}
           {!isOpen3D ? (
             <button
               className="ghost"
@@ -465,21 +552,31 @@ export default function App() {
               </div>
               <PointCloudViewer
                 layers={open3dMainLayers}
-                emptyMessage="请先上传或载入样例点云，随后将在此显示点云效果。"
+                emptyMessage={
+                  isRegistrationAlgorithm
+                    ? "请先上传源点云和目标点云，或载入配准样例对。"
+                    : "请先上传或载入样例点云，随后将在此显示点云效果。"
+                }
                 pointScale={pointScale}
                 resetToken={viewerResetToken}
               />
               <div className="point-cloud-legend">
-                {(open3dViewMode === "source" || open3dViewMode === "overlay") && (
+                {(open3dViewMode === "source" || (open3dViewMode === "overlay" && !isRegistrationAlgorithm)) && (
                   <span className="legend-item">
                     <i className="legend-dot legend-source" />
                     原始点云
                   </span>
                 )}
+                {isRegistrationAlgorithm && open3dViewMode === "overlay" && (
+                  <span className="legend-item">
+                    <i className="legend-dot legend-target" />
+                    目标点云
+                  </span>
+                )}
                 {(open3dViewMode === "processed" || open3dViewMode === "overlay") && (
                   <span className="legend-item">
                     <i className="legend-dot legend-processed" />
-                    处理后点云
+                    {isRegistrationAlgorithm ? "配准后源点云" : "处理后点云"}
                   </span>
                 )}
               </div>

@@ -1,0 +1,26 @@
+ply
+format ascii 1.0
+comment Registration target cloud for Open3D demo
+element vertex 18
+property float x
+property float y
+property float z
+end_header
+-0.23 -0.28 0.00
+-0.04 -0.24 0.00
+0.16 -0.20 0.00
+0.35 -0.16 0.00
+0.55 -0.12 0.00
+-0.27 -0.08 0.00
+-0.09 -0.04 0.08
+0.11 0.00 0.12
+0.30 0.04 0.08
+0.50 0.08 0.00
+-0.31 0.11 0.00
+-0.12 0.15 0.10
+0.08 0.19 0.16
+0.27 0.23 0.10
+0.47 0.27 0.00
+-0.07 0.36 0.04
+0.11 0.42 0.06
+0.10 -0.38 0.03

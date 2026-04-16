@@ -157,6 +157,27 @@ hull, point_indices = pcd.compute_convex_hull(
 )""",
     "compute_mahalanobis_distance": """pcd = o3d.io.read_point_cloud(path)
 distances = np.asarray(pcd.compute_mahalanobis_distance())""",
+    "transform_point_cloud": """pcd = o3d.io.read_point_cloud(path)
+T = np.eye(4)
+T[:3, 3] = [tx, ty, tz]
+pcd.transform(T)""",
+    "registration_icp_point_to_point": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+result = o3d.pipelines.registration.registration_icp(
+    source,
+    target,
+    max_correspondence_distance,
+    np.eye(4),
+    o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+)""",
+    "evaluate_registration": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+evaluation = o3d.pipelines.registration.evaluate_registration(
+    source,
+    target,
+    max_correspondence_distance,
+    np.eye(4),
+)""",
     "segment_plane": """pcd = o3d.io.read_point_cloud(path)
 plane_model, inliers = pcd.segment_plane(
     distance_threshold=distance_threshold,
