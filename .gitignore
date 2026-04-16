@@ -11,3 +11,6 @@ desktop/
 desktop/electron/
 desktop/electron/.runtime/
 scripts/
+open3d/
+__pycache__/
+*.py[cod]

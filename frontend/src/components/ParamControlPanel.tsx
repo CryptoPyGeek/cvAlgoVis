@@ -41,7 +41,14 @@ const PARAM_HINTS: Record<string, string> = {
   min_z: "包围盒最小 Z 边界。",
   max_x: "包围盒最大 X 边界。",
   max_y: "包围盒最大 Y 边界。",
-  max_z: "包围盒最大 Z 边界。"
+  max_z: "包围盒最大 Z 边界。",
+  eps: "DBSCAN 聚类半径，越大越容易合并邻近点簇。",
+  min_points: "形成有效聚类所需的最少点数。",
+  camera_x: "隐藏点移除观察点的 X 坐标。",
+  camera_y: "隐藏点移除观察点的 Y 坐标。",
+  camera_z: "隐藏点移除观察点的 Z 坐标。",
+  robust: "是否启用鲁棒有向包围盒估计。",
+  joggle_inputs: "是否对输入点做微扰以避免凸包退化。"
 };
 
 function paramHint(param: ParamDef): string {

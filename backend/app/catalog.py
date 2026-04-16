@@ -243,6 +243,65 @@ CATALOG = {
                             ],
                         },
                     ],
+                },
+                {
+                    "id": "point_cloud_segmentation_clustering",
+                    "name": "点云分割聚类",
+                    "algorithms": [
+                        {
+                            "id": "cluster_dbscan",
+                            "name": "DBSCAN 聚类",
+                            "params": [
+                                p("eps", 0.001, 2.0, 0.001, 0.12, "聚类邻域半径。"),
+                                p("min_points", 2, 100, 1, 6, "形成聚类所需的最少点数。"),
+                            ],
+                        },
+                        {
+                            "id": "segment_plane_outliers",
+                            "name": "平面外点提取",
+                            "params": [
+                                p("distance_threshold", 0.001, 1.0, 0.001, 0.02, "点到平面的最大内点距离。"),
+                                p("ransac_n", 3, 10, 1, 3, "拟合平面所需采样点数。"),
+                                p("num_iterations", 10, 5000, 10, 1000, "RANSAC 迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "hidden_point_removal",
+                            "name": "隐藏点移除",
+                            "params": [
+                                p("camera_x", -5.0, 5.0, 0.01, 1.6, "观察点 X 坐标。"),
+                                p("camera_y", -5.0, 5.0, 0.01, 1.4, "观察点 Y 坐标。"),
+                                p("camera_z", -5.0, 5.0, 0.01, 1.8, "观察点 Z 坐标。"),
+                                p("radius", 0.01, 20.0, 0.01, 3.0, "可见性球半径。"),
+                            ],
+                        },
+                    ],
+                },
+                {
+                    "id": "point_cloud_geometry_analysis",
+                    "name": "点云几何分析",
+                    "algorithms": [
+                        {
+                            "id": "get_axis_aligned_bounding_box",
+                            "name": "轴对齐包围盒",
+                            "params": [],
+                        },
+                        {
+                            "id": "get_oriented_bounding_box",
+                            "name": "有向包围盒",
+                            "params": [p("robust", 0, 1, 1, 0, "是否启用鲁棒包围盒估计。")],
+                        },
+                        {
+                            "id": "compute_convex_hull",
+                            "name": "凸包计算",
+                            "params": [p("joggle_inputs", 0, 1, 1, 0, "是否扰动输入点以提升退化情况稳定性。")],
+                        },
+                        {
+                            "id": "compute_mahalanobis_distance",
+                            "name": "马氏距离分析",
+                            "params": [],
+                        },
+                    ],
                 }
             ],
         },

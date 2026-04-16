@@ -37,6 +37,14 @@ def test_catalog():
     assert filter_module is not None
     filter_algorithm_ids = {item["id"] for item in filter_module["algorithms"]}
     assert {"uniform_down_sample", "random_down_sample", "remove_radius_outlier", "crop_axis_aligned_bbox"} <= filter_algorithm_ids
+    clustering_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_segmentation_clustering"), None)
+    assert clustering_module is not None
+    clustering_algorithm_ids = {item["id"] for item in clustering_module["algorithms"]}
+    assert {"cluster_dbscan", "segment_plane_outliers", "hidden_point_removal"} <= clustering_algorithm_ids
+    geometry_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_geometry_analysis"), None)
+    assert geometry_module is not None
+    geometry_algorithm_ids = {item["id"] for item in geometry_module["algorithms"]}
+    assert {"get_axis_aligned_bounding_box", "get_oriented_bounding_box", "compute_convex_hull", "compute_mahalanobis_distance"} <= geometry_algorithm_ids
 
 
 def test_process_canny_success():
@@ -189,3 +197,37 @@ def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
     payload = response.json()
     assert payload["meta"]["algorithm"] == "uniform_down_sample"
     assert payload["stats"]["every_k_points"] == 4
+
+
+def test_open3d_process_new_segmentation_algorithm(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes):
+        assert payload.algorithm_id == "cluster_dbscan"
+        assert payload.params["eps"] == 0.12
+        assert payload.params["min_points"] == 6
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "聚类完成，识别出 2 个簇。",
+            "meta": {
+                "elapsed_ms": 10,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "file_type": "ply",
+                "points_before": 80,
+                "points_after": 30,
+            },
+            "stats": {"cluster_count": 2, "largest_cluster_size": 30},
+            "source_points": [[0.0, 0.0, 0.0], [0.1, 0.1, 0.0]],
+            "processed_points": [[0.0, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={"algorithm_id": "cluster_dbscan", "params": '{"eps": 0.12, "min_points": 6}'},
+        files={"file": ("cloud.ply", b"ply-data", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "cluster_dbscan"
+    assert payload["stats"]["cluster_count"] == 2

@@ -128,6 +128,35 @@ bbox = o3d.geometry.AxisAlignedBoundingBox(
     max_bound=[max_x, max_y, max_z],
 )
 cropped = pcd.crop(bbox)""",
+    "cluster_dbscan": """pcd = o3d.io.read_point_cloud(path)
+labels = np.array(
+    pcd.cluster_dbscan(eps=eps, min_points=min_points, print_progress=False)
+)""",
+    "segment_plane_outliers": """pcd = o3d.io.read_point_cloud(path)
+plane_model, inliers = pcd.segment_plane(
+    distance_threshold=distance_threshold,
+    ransac_n=ransac_n,
+    num_iterations=num_iterations,
+)
+outliers = pcd.select_by_index(inliers, invert=True)""",
+    "hidden_point_removal": """pcd = o3d.io.read_point_cloud(path)
+_, visible = pcd.hidden_point_removal(
+    camera_location=[camera_x, camera_y, camera_z],
+    radius=radius,
+)
+visible_cloud = pcd.select_by_index(visible)""",
+    "get_axis_aligned_bounding_box": """pcd = o3d.io.read_point_cloud(path)
+bbox = pcd.get_axis_aligned_bounding_box()
+corners = np.asarray(bbox.get_box_points())""",
+    "get_oriented_bounding_box": """pcd = o3d.io.read_point_cloud(path)
+bbox = pcd.get_oriented_bounding_box(robust=bool(robust))
+corners = np.asarray(bbox.get_box_points())""",
+    "compute_convex_hull": """pcd = o3d.io.read_point_cloud(path)
+hull, point_indices = pcd.compute_convex_hull(
+    joggle_inputs=bool(joggle_inputs)
+)""",
+    "compute_mahalanobis_distance": """pcd = o3d.io.read_point_cloud(path)
+distances = np.asarray(pcd.compute_mahalanobis_distance())""",
     "segment_plane": """pcd = o3d.io.read_point_cloud(path)
 plane_model, inliers = pcd.segment_plane(
     distance_threshold=distance_threshold,
