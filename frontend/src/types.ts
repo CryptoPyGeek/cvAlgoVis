@@ -56,7 +56,7 @@ export type Open3DProcessResponse = {
     points_before: number;
     points_after: number;
   };
-  stats: Record<string, string | number | boolean | number[]>;
+  stats: Record<string, string | number | boolean | number[] | number[][]>;
   source_points: [number, number, number][];
   target_points: [number, number, number][];
   processed_points: [number, number, number][];

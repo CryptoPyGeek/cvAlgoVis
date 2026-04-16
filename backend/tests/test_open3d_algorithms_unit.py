@@ -6,10 +6,19 @@ o3d = pytest.importorskip("open3d")
 from app.services.open3d_algorithms import (
     cluster_dbscan,
     compute_convex_hull,
+    compute_fpfh_feature,
+    compute_nearest_neighbor_distance,
+    compute_point_cloud_distance,
     evaluate_registration,
     get_axis_aligned_bounding_box,
     hidden_point_removal,
+    registration_colored_icp,
+    registration_fast_based_on_feature_matching,
+    registration_fast_then_icp_point_to_plane,
     registration_icp_point_to_point,
+    registration_icp_point_to_plane,
+    registration_ransac_based_on_feature_matching,
+    registration_ransac_then_icp_point_to_plane,
     segment_plane_outliers,
     transform_point_cloud,
 )
@@ -152,9 +161,150 @@ def test_registration_icp_point_to_point_returns_metrics():
     assert len(stats["transformation"]) == 4
 
 
+def test_registration_icp_point_to_plane_returns_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_icp_point_to_plane(
+        source,
+        target,
+        {"max_correspondence_distance": 0.5, "max_iteration": 50, "normal_radius": 0.3, "normal_max_nn": 8},
+    )
+    assert len(processed.points) == len(source.points)
+    assert "fitness" in stats
+    assert "inlier_rmse" in stats
+    assert stats["normal_max_nn"] == 8
+
+
+def test_compute_fpfh_feature_reports_feature_stats():
+    source, _ = sample_registration_pair()
+    processed, stats = compute_fpfh_feature(
+        source,
+        {"normal_radius": 0.3, "normal_max_nn": 8, "feature_radius": 0.5, "feature_max_nn": 12},
+    )
+    assert len(processed.points) == len(source.points)
+    assert stats["feature_dimension"] == 33
+    assert stats["feature_count"] == len(source.points)
+
+
+def test_registration_ransac_based_on_feature_matching_returns_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_ransac_based_on_feature_matching(
+        source,
+        target,
+        {
+            "normal_radius": 0.3,
+            "normal_max_nn": 8,
+            "feature_radius": 0.5,
+            "feature_max_nn": 12,
+            "max_correspondence_distance": 0.3,
+            "ransac_n": 3,
+            "max_iteration": 10000,
+        },
+    )
+    assert len(processed.points) == len(source.points)
+    assert stats["fitness"] >= 0
+    assert len(stats["transformation"]) == 4
+
+
+def test_registration_fast_based_on_feature_matching_returns_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_fast_based_on_feature_matching(
+        source,
+        target,
+        {
+            "normal_radius": 0.3,
+            "normal_max_nn": 8,
+            "feature_radius": 0.5,
+            "feature_max_nn": 12,
+            "max_correspondence_distance": 0.3,
+            "iteration_number": 32,
+        },
+    )
+    assert len(processed.points) == len(source.points)
+    assert stats["fitness"] >= 0
+    assert stats["iteration_number"] == 32
+
+
+def test_registration_colored_icp_returns_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_colored_icp(
+        source,
+        target,
+        {
+            "max_correspondence_distance": 0.3,
+            "max_iteration": 30,
+            "normal_radius": 0.3,
+            "normal_max_nn": 8,
+            "lambda_geometric": 0.968,
+        },
+    )
+    assert len(processed.points) == len(source.points)
+    assert "fitness" in stats
+    assert "inlier_rmse" in stats
+    assert stats["lambda_geometric"] == 0.968
+
+
+def test_registration_ransac_then_icp_point_to_plane_returns_both_stage_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_ransac_then_icp_point_to_plane(
+        source,
+        target,
+        {
+            "normal_radius": 0.3,
+            "normal_max_nn": 8,
+            "feature_radius": 0.5,
+            "feature_max_nn": 12,
+            "max_correspondence_distance": 0.3,
+            "ransac_n": 3,
+            "coarse_max_iteration": 10000,
+            "icp_max_iteration": 40,
+        },
+    )
+    assert len(processed.points) == len(source.points)
+    assert "coarse_fitness" in stats
+    assert "refined_fitness" in stats
+    assert len(stats["initial_transformation"]) == 4
+    assert len(stats["transformation"]) == 4
+
+
+def test_registration_fast_then_icp_point_to_plane_returns_both_stage_metrics():
+    source, target = sample_registration_pair()
+    processed, stats = registration_fast_then_icp_point_to_plane(
+        source,
+        target,
+        {
+            "normal_radius": 0.3,
+            "normal_max_nn": 8,
+            "feature_radius": 0.5,
+            "feature_max_nn": 12,
+            "max_correspondence_distance": 0.3,
+            "iteration_number": 32,
+            "icp_max_iteration": 40,
+        },
+    )
+    assert len(processed.points) == len(source.points)
+    assert "coarse_fitness" in stats
+    assert "refined_fitness" in stats
+    assert stats["iteration_number"] == 32
+
+
 def test_evaluate_registration_reports_summary_metrics():
     source, target = sample_registration_pair()
     processed, stats = evaluate_registration(source, target, {"max_correspondence_distance": 0.5})
     assert len(processed.points) == len(source.points)
     assert stats["fitness"] >= 0
     assert stats["correspondence_set_size"] >= 0
+
+
+def test_compute_nearest_neighbor_distance_reports_stats():
+    processed, stats = compute_nearest_neighbor_distance(sample_cluster_cloud(), {})
+    assert len(processed.points) == len(sample_cluster_cloud().points)
+    assert stats["distance_max"] >= stats["distance_min"]
+    assert stats["distance_mean"] >= 0
+
+
+def test_compute_point_cloud_distance_reports_stats():
+    source, target = sample_registration_pair()
+    processed, stats = compute_point_cloud_distance(source, target, {})
+    assert len(processed.points) == len(source.points)
+    assert stats["distance_count"] == len(source.points)
+    assert stats["distance_mean"] >= 0

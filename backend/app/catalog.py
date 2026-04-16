@@ -301,6 +301,16 @@ CATALOG = {
                             "name": "马氏距离分析",
                             "params": [],
                         },
+                        {
+                            "id": "compute_nearest_neighbor_distance",
+                            "name": "最近邻距离分析",
+                            "params": [],
+                        },
+                        {
+                            "id": "compute_point_cloud_distance",
+                            "name": "点云间距离分析",
+                            "params": [],
+                        },
                     ],
                 },
                 {
@@ -325,6 +335,89 @@ CATALOG = {
                             "params": [
                                 p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.18, "最大对应点距离阈值。"),
                                 p("max_iteration", 1, 200, 1, 40, "ICP 最大迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_icp_point_to_plane",
+                            "name": "ICP 点到面配准",
+                            "params": [
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.18, "最大对应点距离阈值。"),
+                                p("max_iteration", 1, 200, 1, 40, "ICP 最大迭代次数。"),
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "估计法线时的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居点数。"),
+                            ],
+                        },
+                        {
+                            "id": "compute_fpfh_feature",
+                            "name": "FPFH 特征计算",
+                            "params": [
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居数。"),
+                                p("feature_radius", 0.01, 5.0, 0.01, 0.5, "FPFH 特征搜索半径。"),
+                                p("feature_max_nn", 5, 300, 1, 50, "FPFH 特征最大邻居数。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_ransac_based_on_feature_matching",
+                            "name": "RANSAC 特征粗配准",
+                            "params": [
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居数。"),
+                                p("feature_radius", 0.01, 5.0, 0.01, 0.5, "FPFH 特征搜索半径。"),
+                                p("feature_max_nn", 5, 300, 1, 50, "FPFH 特征最大邻居数。"),
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.3, "最大对应点距离阈值。"),
+                                p("ransac_n", 3, 6, 1, 3, "RANSAC 单次采样点数。"),
+                                p("max_iteration", 1000, 200000, 1000, 10000, "RANSAC 最大迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_fast_based_on_feature_matching",
+                            "name": "快速全局特征配准",
+                            "params": [
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居数。"),
+                                p("feature_radius", 0.01, 5.0, 0.01, 0.5, "FPFH 特征搜索半径。"),
+                                p("feature_max_nn", 5, 300, 1, 50, "FPFH 特征最大邻居数。"),
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.3, "最大对应点距离阈值。"),
+                                p("iteration_number", 1, 256, 1, 32, "快速全局配准迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_colored_icp",
+                            "name": "彩色 ICP 配准",
+                            "params": [
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.18, "最大对应点距离阈值。"),
+                                p("max_iteration", 1, 200, 1, 30, "彩色 ICP 最大迭代次数。"),
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居点数。"),
+                                p("lambda_geometric", 0.0, 1.0, 0.01, 0.968, "几何项权重，越大越偏向几何一致性。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_ransac_then_icp_point_to_plane",
+                            "name": "RANSAC + 点到面 ICP",
+                            "params": [
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居数。"),
+                                p("feature_radius", 0.01, 5.0, 0.01, 0.5, "FPFH 特征搜索半径。"),
+                                p("feature_max_nn", 5, 300, 1, 50, "FPFH 特征最大邻居数。"),
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.3, "粗配准和精配准共用的对应点距离阈值。"),
+                                p("ransac_n", 3, 6, 1, 3, "RANSAC 单次采样点数。"),
+                                p("coarse_max_iteration", 1000, 200000, 1000, 10000, "RANSAC 粗配准最大迭代次数。"),
+                                p("icp_max_iteration", 1, 200, 1, 40, "ICP 精配准最大迭代次数。"),
+                            ],
+                        },
+                        {
+                            "id": "registration_fast_then_icp_point_to_plane",
+                            "name": "快速全局配准 + 点到面 ICP",
+                            "params": [
+                                p("normal_radius", 0.01, 5.0, 0.01, 0.2, "法线估计的邻域半径。"),
+                                p("normal_max_nn", 5, 200, 1, 30, "法线估计的最大邻居数。"),
+                                p("feature_radius", 0.01, 5.0, 0.01, 0.5, "FPFH 特征搜索半径。"),
+                                p("feature_max_nn", 5, 300, 1, 50, "FPFH 特征最大邻居数。"),
+                                p("max_correspondence_distance", 0.001, 2.0, 0.001, 0.3, "粗配准和精配准共用的对应点距离阈值。"),
+                                p("iteration_number", 1, 256, 1, 32, "快速全局配准迭代次数。"),
+                                p("icp_max_iteration", 1, 200, 1, 40, "ICP 精配准最大迭代次数。"),
                             ],
                         },
                         {

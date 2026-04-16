@@ -170,6 +170,93 @@ result = o3d.pipelines.registration.registration_icp(
     np.eye(4),
     o3d.pipelines.registration.TransformationEstimationPointToPoint(),
 )""",
+    "registration_icp_point_to_plane": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+source.estimate_normals(
+    o3d.geometry.KDTreeSearchParamHybrid(radius=normal_radius, max_nn=normal_max_nn)
+)
+target.estimate_normals(
+    o3d.geometry.KDTreeSearchParamHybrid(radius=normal_radius, max_nn=normal_max_nn)
+)
+result = o3d.pipelines.registration.registration_icp(
+    source,
+    target,
+    max_correspondence_distance,
+    np.eye(4),
+    o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+)""",
+    "compute_fpfh_feature": """pcd = o3d.io.read_point_cloud(path)
+pcd.estimate_normals(
+    o3d.geometry.KDTreeSearchParamHybrid(radius=normal_radius, max_nn=normal_max_nn)
+)
+feature = o3d.pipelines.registration.compute_fpfh_feature(
+    pcd,
+    o3d.geometry.KDTreeSearchParamHybrid(radius=feature_radius, max_nn=feature_max_nn),
+)""",
+    "registration_ransac_based_on_feature_matching": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+source_feature = compute_fpfh(source)
+target_feature = compute_fpfh(target)
+result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+    source,
+    target,
+    source_feature,
+    target_feature,
+    True,
+    max_correspondence_distance,
+    o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+)""",
+    "registration_fast_based_on_feature_matching": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+source_feature = compute_fpfh(source)
+target_feature = compute_fpfh(target)
+result = o3d.pipelines.registration.registration_fgr_based_on_feature_matching(
+    source,
+    target,
+    source_feature,
+    target_feature,
+    o3d.pipelines.registration.FastGlobalRegistrationOption(
+        maximum_correspondence_distance=max_correspondence_distance,
+        iteration_number=iteration_number,
+    ),
+)""",
+    "registration_colored_icp": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+source.estimate_normals(
+    o3d.geometry.KDTreeSearchParamHybrid(radius=normal_radius, max_nn=normal_max_nn)
+)
+target.estimate_normals(
+    o3d.geometry.KDTreeSearchParamHybrid(radius=normal_radius, max_nn=normal_max_nn)
+)
+result = o3d.pipelines.registration.registration_colored_icp(
+    source,
+    target,
+    max_correspondence_distance,
+    np.eye(4),
+    o3d.pipelines.registration.TransformationEstimationForColoredICP(
+        lambda_geometric=lambda_geometric
+    ),
+)""",
+    "registration_ransac_then_icp_point_to_plane": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+init = coarse_registration_with_fpfh(source, target)
+result = o3d.pipelines.registration.registration_icp(
+    source,
+    target,
+    max_correspondence_distance,
+    init.transformation,
+    o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+)""",
+    "registration_fast_then_icp_point_to_plane": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+init = fast_global_registration_with_fpfh(source, target)
+result = o3d.pipelines.registration.registration_icp(
+    source,
+    target,
+    max_correspondence_distance,
+    init.transformation,
+    o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+)""",
     "evaluate_registration": """source = o3d.io.read_point_cloud(source_path)
 target = o3d.io.read_point_cloud(target_path)
 evaluation = o3d.pipelines.registration.evaluate_registration(
@@ -178,6 +265,11 @@ evaluation = o3d.pipelines.registration.evaluate_registration(
     max_correspondence_distance,
     np.eye(4),
 )""",
+    "compute_nearest_neighbor_distance": """pcd = o3d.io.read_point_cloud(path)
+distances = np.asarray(pcd.compute_nearest_neighbor_distance())""",
+    "compute_point_cloud_distance": """source = o3d.io.read_point_cloud(source_path)
+target = o3d.io.read_point_cloud(target_path)
+distances = np.asarray(source.compute_point_cloud_distance(target))""",
     "segment_plane": """pcd = o3d.io.read_point_cloud(path)
 plane_model, inliers = pcd.segment_plane(
     distance_threshold=distance_threshold,

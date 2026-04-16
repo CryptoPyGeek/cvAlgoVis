@@ -30,9 +30,7 @@ const PARAM_HINTS: Record<string, string> = {
   nb_neighbors: "统计离群点分析时的邻域点数。",
   std_ratio: "离群点判定的标准差比例阈值。",
   distance_threshold: "点到平面的最大允许距离。",
-  ransac_n: "RANSAC 每次拟合平面抽样的点数。",
-  num_iterations: "RANSAC 最大迭代次数。"
-  ,
+  num_iterations: "RANSAC 最大迭代次数。",
   every_k_points: "均匀下采样保留步长，越大保留的点越少。",
   sampling_ratio: "随机保留点比例，越小采样越稀疏。",
   nb_points: "半径离群点去除要求的最少邻居点数。",
@@ -54,7 +52,16 @@ const PARAM_HINTS: Record<string, string> = {
   pitch_deg: "绕 Y 轴旋转角度。",
   yaw_deg: "绕 Z 轴旋转角度。",
   max_correspondence_distance: "源点与目标点建立对应关系的最大距离。",
-  max_iteration: "ICP 迭代次数上限。"
+  max_iteration: "ICP 迭代次数上限。",
+  normal_radius: "点到面 ICP 中法线估计的邻域半径。",
+  normal_max_nn: "点到面 ICP 中法线估计的最大邻居数量。",
+  feature_radius: "FPFH 特征搜索半径。",
+  feature_max_nn: "FPFH 特征搜索的最大邻居数。",
+  ransac_n: "RANSAC 每次采样用于估计变换的点数。",
+  iteration_number: "快速全局配准的迭代次数。",
+  lambda_geometric: "彩色 ICP 中几何一致性相对颜色一致性的权重。",
+  coarse_max_iteration: "粗配准阶段的最大迭代次数。",
+  icp_max_iteration: "精配准阶段 ICP 的最大迭代次数。"
 };
 
 function paramHint(param: ParamDef): string {

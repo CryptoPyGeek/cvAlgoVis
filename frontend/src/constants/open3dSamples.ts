@@ -16,7 +16,19 @@ export const OPEN3D_SAMPLES: Open3DSampleDef[] = [
     file: samplePath("open3d-registration-source.ply"),
     targetFile: samplePath("open3d-registration-target.ply"),
     description: "成对的源点云与目标点云，适合演示刚体变换、ICP 点到点配准和配准质量评估。",
-    recommendedAlgorithms: ["transform_point_cloud", "registration_icp_point_to_point", "evaluate_registration"]
+    recommendedAlgorithms: [
+      "transform_point_cloud",
+      "registration_icp_point_to_point",
+      "registration_icp_point_to_plane",
+      "compute_fpfh_feature",
+      "registration_ransac_based_on_feature_matching",
+      "registration_fast_based_on_feature_matching",
+      "registration_colored_icp",
+      "registration_ransac_then_icp_point_to_plane",
+      "registration_fast_then_icp_point_to_plane",
+      "evaluate_registration",
+      "compute_point_cloud_distance"
+    ]
   },
   {
     id: "plane-outliers",
@@ -57,6 +69,12 @@ export const OPEN3D_SAMPLES: Open3DSampleDef[] = [
     label: "球壳点云",
     file: samplePath("open3d-sphere-shell.ply"),
     description: "曲面结构更明显，适合观察法线方向和稀疏化效果。",
-    recommendedAlgorithms: ["estimate_normals", "voxel_down_sample", "random_down_sample", "hidden_point_removal"]
+    recommendedAlgorithms: [
+      "estimate_normals",
+      "voxel_down_sample",
+      "random_down_sample",
+      "hidden_point_removal",
+      "compute_nearest_neighbor_distance"
+    ]
   }
 ];

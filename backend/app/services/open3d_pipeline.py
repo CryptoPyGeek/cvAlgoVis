@@ -13,7 +13,17 @@ from app.services.open3d_algorithms import OPEN3D_ALGORITHM_HANDLERS
 
 SUPPORTED_POINT_CLOUD_EXTENSIONS = {".ply", ".pcd"}
 MAX_PREVIEW_POINTS = 5000
-OPEN3D_ALGORITHMS_REQUIRING_TARGET = {"registration_icp_point_to_point", "evaluate_registration"}
+OPEN3D_ALGORITHMS_REQUIRING_TARGET = {
+    "registration_icp_point_to_point",
+    "registration_icp_point_to_plane",
+    "registration_ransac_based_on_feature_matching",
+    "registration_fast_based_on_feature_matching",
+    "registration_colored_icp",
+    "registration_ransac_then_icp_point_to_plane",
+    "registration_fast_then_icp_point_to_plane",
+    "evaluate_registration",
+    "compute_point_cloud_distance",
+}
 
 
 def _require_open3d():
@@ -88,10 +98,34 @@ def process_point_cloud_file(
         summary = f"隐藏点移除完成，保留了 {stats.get('visible_count', 0)} 个可见点。"
     elif request.algorithm_id == "registration_icp_point_to_point":
         summary = f"ICP 配准完成，fitness={stats.get('fitness', 0):.4f}。"
+    elif request.algorithm_id == "registration_icp_point_to_plane":
+        summary = f"点到面 ICP 配准完成，fitness={stats.get('fitness', 0):.4f}。"
+    elif request.algorithm_id == "registration_ransac_based_on_feature_matching":
+        summary = f"RANSAC 粗配准完成，fitness={stats.get('fitness', 0):.4f}。"
+    elif request.algorithm_id == "registration_fast_based_on_feature_matching":
+        summary = f"快速全局配准完成，fitness={stats.get('fitness', 0):.4f}。"
+    elif request.algorithm_id == "registration_colored_icp":
+        summary = f"彩色 ICP 配准完成，fitness={stats.get('fitness', 0):.4f}。"
+    elif request.algorithm_id == "registration_ransac_then_icp_point_to_plane":
+        summary = (
+            f"RANSAC + 点到面 ICP 完成，粗配准 fitness={stats.get('coarse_fitness', 0):.4f}，"
+            f"精配准 fitness={stats.get('refined_fitness', 0):.4f}。"
+        )
+    elif request.algorithm_id == "registration_fast_then_icp_point_to_plane":
+        summary = (
+            f"快速全局配准 + 点到面 ICP 完成，粗配准 fitness={stats.get('coarse_fitness', 0):.4f}，"
+            f"精配准 fitness={stats.get('refined_fitness', 0):.4f}。"
+        )
+    elif request.algorithm_id == "compute_fpfh_feature":
+        summary = f"FPFH 特征计算完成，共生成 {stats.get('feature_count', 0)} 个特征向量。"
     elif request.algorithm_id == "evaluate_registration":
         summary = f"配准评估完成，fitness={stats.get('fitness', 0):.4f}，rmse={stats.get('inlier_rmse', 0):.4f}。"
     elif request.algorithm_id == "transform_point_cloud":
         summary = f"点云变换完成，输出点数保持为 {points_after}。"
+    elif request.algorithm_id == "compute_nearest_neighbor_distance":
+        summary = f"最近邻距离统计完成，均值为 {stats.get('distance_mean', 0):.4f}。"
+    elif request.algorithm_id == "compute_point_cloud_distance":
+        summary = f"点云间距离统计完成，均值为 {stats.get('distance_mean', 0):.4f}。"
     elif request.algorithm_id == "estimate_normals":
         summary = "法线估计完成，点云法线已更新。"
     elif request.algorithm_id == "remove_statistical_outlier":

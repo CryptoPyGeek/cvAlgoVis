@@ -44,11 +44,29 @@ def test_catalog():
     geometry_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_geometry_analysis"), None)
     assert geometry_module is not None
     geometry_algorithm_ids = {item["id"] for item in geometry_module["algorithms"]}
-    assert {"get_axis_aligned_bounding_box", "get_oriented_bounding_box", "compute_convex_hull", "compute_mahalanobis_distance"} <= geometry_algorithm_ids
+    assert {
+        "get_axis_aligned_bounding_box",
+        "get_oriented_bounding_box",
+        "compute_convex_hull",
+        "compute_mahalanobis_distance",
+        "compute_nearest_neighbor_distance",
+        "compute_point_cloud_distance",
+    } <= geometry_algorithm_ids
     registration_module = next((module for module in open3d_library["modules"] if module["id"] == "point_cloud_registration"), None)
     assert registration_module is not None
     registration_algorithm_ids = {item["id"] for item in registration_module["algorithms"]}
-    assert {"transform_point_cloud", "registration_icp_point_to_point", "evaluate_registration"} <= registration_algorithm_ids
+    assert {
+        "transform_point_cloud",
+        "registration_icp_point_to_point",
+        "registration_icp_point_to_plane",
+        "compute_fpfh_feature",
+        "registration_ransac_based_on_feature_matching",
+        "registration_fast_based_on_feature_matching",
+        "registration_colored_icp",
+        "registration_ransac_then_icp_point_to_plane",
+        "registration_fast_then_icp_point_to_plane",
+        "evaluate_registration",
+    } <= registration_algorithm_ids
 
 
 def test_process_canny_success():
@@ -313,3 +331,216 @@ def test_open3d_process_registration_algorithm_with_target(monkeypatch):
     payload = response.json()
     assert payload["meta"]["target_filename"] == "target.ply"
     assert payload["target_points"] == [[0.2, 0.0, 0.0]]
+
+
+def test_open3d_process_point_to_plane_registration(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "registration_icp_point_to_plane"
+        assert payload.params["normal_radius"] == 0.2
+        assert target_file_bytes == b"target-data"
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "点到面 ICP 配准完成。",
+            "meta": {
+                "elapsed_ms": 15,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": payload.target_filename,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"fitness": 0.97, "inlier_rmse": 0.02, "normal_radius": 0.2},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [[0.2, 0.0, 0.0]],
+            "processed_points": [[0.18, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={
+            "algorithm_id": "registration_icp_point_to_plane",
+            "params": '{"max_correspondence_distance": 0.18, "max_iteration": 40, "normal_radius": 0.2, "normal_max_nn": 30}',
+        },
+        files={
+            "file": ("source.ply", b"source-data", "application/octet-stream"),
+            "target_file": ("target.ply", b"target-data", "application/octet-stream"),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "registration_icp_point_to_plane"
+    assert payload["stats"]["normal_radius"] == 0.2
+
+
+def test_open3d_process_compute_fpfh_feature(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "compute_fpfh_feature"
+        assert payload.params["feature_radius"] == 0.5
+        assert target_file_bytes is None
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "FPFH 特征计算完成。",
+            "meta": {
+                "elapsed_ms": 9,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": None,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"feature_dimension": 33, "feature_count": 18},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [],
+            "processed_points": [[0.0, 0.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={
+            "algorithm_id": "compute_fpfh_feature",
+            "params": '{"normal_radius": 0.2, "normal_max_nn": 30, "feature_radius": 0.5, "feature_max_nn": 50}',
+        },
+        files={"file": ("source.ply", b"source-data", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stats"]["feature_dimension"] == 33
+
+
+def test_open3d_process_ransac_registration_with_target(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "registration_ransac_based_on_feature_matching"
+        assert payload.target_filename == "target.ply"
+        assert payload.params["ransac_n"] == 3
+        assert target_file_bytes == b"target-data"
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "RANSAC 粗配准完成。",
+            "meta": {
+                "elapsed_ms": 22,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": payload.target_filename,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"fitness": 1.0, "ransac_n": 3},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [[0.2, 0.0, 0.0]],
+            "processed_points": [[0.12, -0.02, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={
+            "algorithm_id": "registration_ransac_based_on_feature_matching",
+            "params": '{"normal_radius": 0.2, "normal_max_nn": 30, "feature_radius": 0.5, "feature_max_nn": 50, "max_correspondence_distance": 0.3, "ransac_n": 3, "max_iteration": 10000}',
+        },
+        files={
+            "file": ("source.ply", b"source-data", "application/octet-stream"),
+            "target_file": ("target.ply", b"target-data", "application/octet-stream"),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "registration_ransac_based_on_feature_matching"
+    assert payload["meta"]["target_filename"] == "target.ply"
+
+
+def test_open3d_process_colored_icp_with_target(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "registration_colored_icp"
+        assert payload.target_filename == "target.ply"
+        assert payload.params["lambda_geometric"] == 0.968
+        assert target_file_bytes == b"target-data"
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "彩色 ICP 配准完成。",
+            "meta": {
+                "elapsed_ms": 20,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": payload.target_filename,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {"fitness": 0.99, "lambda_geometric": 0.968},
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [[0.2, 0.0, 0.0]],
+            "processed_points": [[0.12, -0.02, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={
+            "algorithm_id": "registration_colored_icp",
+            "params": '{"max_correspondence_distance": 0.18, "max_iteration": 30, "normal_radius": 0.2, "normal_max_nn": 30, "lambda_geometric": 0.968}',
+        },
+        files={
+            "file": ("source.ply", b"source-data", "application/octet-stream"),
+            "target_file": ("target.ply", b"target-data", "application/octet-stream"),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "registration_colored_icp"
+    assert payload["stats"]["lambda_geometric"] == 0.968
+
+
+def test_open3d_process_ransac_then_icp_pipeline(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "registration_ransac_then_icp_point_to_plane"
+        assert payload.params["coarse_max_iteration"] == 10000
+        assert target_file_bytes == b"target-data"
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "RANSAC + 点到面 ICP 完成。",
+            "meta": {
+                "elapsed_ms": 28,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "target_filename": payload.target_filename,
+                "file_type": "ply",
+                "points_before": 18,
+                "points_after": 18,
+            },
+            "stats": {
+                "coarse_fitness": 0.91,
+                "refined_fitness": 0.99,
+                "initial_transformation": [[1, 0, 0, 0.1], [0, 1, 0, -0.02], [0, 0, 1, 0], [0, 0, 0, 1]],
+                "transformation": [[1, 0, 0, 0.12], [0, 1, 0, -0.02], [0, 0, 1, 0], [0, 0, 0, 1]],
+            },
+            "source_points": [[0.0, 0.0, 0.0]],
+            "target_points": [[0.2, 0.0, 0.0]],
+            "processed_points": [[0.12, -0.02, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={
+            "algorithm_id": "registration_ransac_then_icp_point_to_plane",
+            "params": '{"normal_radius": 0.2, "normal_max_nn": 30, "feature_radius": 0.5, "feature_max_nn": 50, "max_correspondence_distance": 0.3, "ransac_n": 3, "coarse_max_iteration": 10000, "icp_max_iteration": 40}',
+        },
+        files={
+            "file": ("source.ply", b"source-data", "application/octet-stream"),
+            "target_file": ("target.ply", b"target-data", "application/octet-stream"),
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "registration_ransac_then_icp_point_to_plane"
+    assert payload["stats"]["refined_fitness"] == 0.99
