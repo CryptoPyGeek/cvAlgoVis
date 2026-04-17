@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { fetchCatalog, fetchSnippet, processImage, processOpen3D } from "./api/client";
 import { AlgorithmSelector } from "./components/AlgorithmSelector";
 import { CodePanel } from "./components/CodePanel";
 import { ImagePreviewPanel } from "./components/ImagePreviewPanel";
 import { LibrarySelector } from "./components/LibrarySelector";
+import { Open3DRegistrationSummary } from "./components/Open3DRegistrationSummary";
 import { ParamControlPanel } from "./components/ParamControlPanel";
 import { PointCloudViewer } from "./components/PointCloudViewer";
 import { OPEN3D_SAMPLES } from "./constants/open3dSamples";
@@ -60,6 +61,12 @@ export default function App() {
   const [pointScale, setPointScale] = useState(1);
   const [viewerResetToken, setViewerResetToken] = useState(0);
   const [open3dViewMode, setOpen3dViewMode] = useState<"source" | "processed" | "overlay">("overlay");
+  const [isOpen3dProcessing, setIsOpen3dProcessing] = useState(false);
+  const [lastAppliedAlgorithmId, setLastAppliedAlgorithmId] = useState<string | null>(null);
+  const [lastAppliedParamsSignature, setLastAppliedParamsSignature] = useState<string>("");
+  const [lastAppliedParamValues, setLastAppliedParamValues] = useState<Record<string, number>>({});
+  const latestOpen3dRequestRef = useRef(0);
+  const open3dAbortRef = useRef<AbortController | null>(null);
 
   const activeLibrary = useMemo(() => {
     return catalog?.libraries.find((library) => library.id === libraryId);
@@ -88,6 +95,13 @@ export default function App() {
   const requiresTargetPointCloud = activeAlgorithm
     ? OPEN3D_TARGET_ALGORITHMS.has(activeAlgorithm.id)
     : false;
+  const currentOpen3dParamsSignature = useMemo(() => JSON.stringify(paramValues), [paramValues]);
+  const isCurrentOpen3dResultFresh =
+    !isOpen3dProcessing &&
+    Boolean(open3dResult) &&
+    lastAppliedAlgorithmId === activeAlgorithm?.id &&
+    lastAppliedParamsSignature === currentOpen3dParamsSignature;
+  const registrationHintSampleIds = new Set(["registration-pair"]);
 
   function toDataUrl(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -253,26 +267,43 @@ export default function App() {
       if (!activeAlgorithm) return;
       if (isOpen3D) {
         if (!open3dFile) {
+          setIsOpen3dProcessing(false);
           setStatusText("状态：请先上传点云文件");
           return;
         }
         if (requiresTargetPointCloud && !open3dTargetFile) {
+          setIsOpen3dProcessing(false);
           setStatusText("状态：该算法请同时上传目标点云");
           return;
         }
-        setStatusText("状态：Open3D Processing...");
+        latestOpen3dRequestRef.current += 1;
+        const requestId = latestOpen3dRequestRef.current;
+        open3dAbortRef.current?.abort();
+        const controller = new AbortController();
+        open3dAbortRef.current = controller;
+        setIsOpen3dProcessing(true);
+        setStatusText(open3dResult ? "状态：参数已更新，等待最新结果" : "状态：Open3D Processing...");
         processOpen3D({
           algorithm_id: activeAlgorithm.id,
           params: paramValues,
           file: open3dFile,
-          target_file: requiresTargetPointCloud ? open3dTargetFile : undefined
+          target_file: requiresTargetPointCloud ? open3dTargetFile : undefined,
+          signal: controller.signal
         })
           .then((res) => {
+            if (requestId !== latestOpen3dRequestRef.current) return;
             setOpen3dResult(res);
             setElapsedMs(res.meta.elapsed_ms);
+            setLastAppliedAlgorithmId(activeAlgorithm.id);
+            setLastAppliedParamsSignature(currentOpen3dParamsSignature);
+            setLastAppliedParamValues({ ...paramValues });
+            setIsOpen3dProcessing(false);
             setStatusText("状态：Ready");
           })
           .catch((err: Error) => {
+            if (requestId !== latestOpen3dRequestRef.current) return;
+            if (err.name === "AbortError") return;
+            setIsOpen3dProcessing(false);
             setStatusText(`状态：Open3D 处理失败（${err.message.slice(0, 40)}）`);
           });
         return;
@@ -304,7 +335,7 @@ export default function App() {
       isRegistrationAlgorithm,
       requiresTargetPointCloud,
       activeAlgorithm?.id,
-      JSON.stringify(paramValues),
+      currentOpen3dParamsSignature,
       sourceImageApi,
       open3dFile?.name,
       open3dFile?.size,
@@ -330,15 +361,25 @@ export default function App() {
   }
 
   function onPointCloudUpload(file: File, message?: string) {
+    open3dAbortRef.current?.abort();
+    setIsOpen3dProcessing(false);
     setOpen3dFile(file);
     setOpen3dResult(null);
+    setLastAppliedAlgorithmId(null);
+    setLastAppliedParamsSignature("");
+    setLastAppliedParamValues({});
     setElapsedMs(0);
     setStatusText(message ?? `状态：已载入点云文件 ${file.name}`);
   }
 
   function onTargetPointCloudUpload(file: File, message?: string) {
+    open3dAbortRef.current?.abort();
+    setIsOpen3dProcessing(false);
     setOpen3dTargetFile(file);
     setOpen3dResult(null);
+    setLastAppliedAlgorithmId(null);
+    setLastAppliedParamsSignature("");
+    setLastAppliedParamValues({});
     setElapsedMs(0);
     setStatusText(message ?? `状态：已载入目标点云 ${file.name}`);
   }
@@ -358,7 +399,7 @@ export default function App() {
     if (!open3dResult) {
       return [
         "等待 Open3D 处理结果。",
-        "处理完成后会展示点数变化与算法统计信息。",
+        isOpen3dProcessing ? "参数已更新，正在计算最新结果。" : "处理完成后会展示点数变化与算法统计信息。",
         requiresTargetPointCloud ? "该算法需要同时提供源点云和目标点云。" : "支持在左侧三维视图中直接观察点云结果。"
       ];
     }
@@ -377,12 +418,13 @@ export default function App() {
 
     return [
       open3dResult.summary,
+      isCurrentOpen3dResultFresh ? "结果状态：当前显示为最新参数结果" : "结果状态：当前显示为上一版结果，正在刷新",
       `输入点数：${open3dResult.meta.points_before}`,
       `输出点数：${open3dResult.meta.points_after}`,
       `文件类型：${open3dResult.meta.file_type}`,
       ...statsLines
     ];
-  }, [open3dResult, requiresTargetPointCloud]);
+  }, [isCurrentOpen3dResultFresh, isOpen3dProcessing, open3dResult, requiresTargetPointCloud]);
 
   const open3dOverlayLayers = useMemo(() => {
     if (!open3dResult) return [];
@@ -401,6 +443,21 @@ export default function App() {
   const open3dProcessedLayers = useMemo(() => {
     if (!open3dResult) return [];
     return [{ points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }];
+  }, [open3dResult]);
+
+  const open3dReferenceLayers = useMemo(() => {
+    if (!open3dResult) return [];
+    const layers = [];
+    if (open3dResult.source_points.length > 0) {
+      layers.push({ points: open3dResult.source_points, color: "#4da3ff", size: 0.06 });
+    }
+    if (open3dResult.target_points.length > 0) {
+      layers.push({ points: open3dResult.target_points, color: "#47d7ac", size: 0.07 });
+    }
+    if (open3dResult.processed_points.length > 0) {
+      layers.push({ points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 });
+    }
+    return layers;
   }, [open3dResult]);
 
   const open3dMainLayers = useMemo(() => {
@@ -438,13 +495,23 @@ export default function App() {
       selectedOpen3dSample && activeAlgorithm && selectedOpen3dSample.recommendedAlgorithms.includes(activeAlgorithm.id)
         ? `当前算法已匹配推荐样例：${activeAlgorithm.id}`
         : `当前算法：${activeAlgorithm?.id ?? "未选择"}`;
+    const freshnessLine = open3dResult
+      ? isCurrentOpen3dResultFresh
+        ? "结果一致性：已与当前参数同步"
+        : "结果一致性：参数已变更，正在等待最新结果"
+      : isOpen3dProcessing
+        ? "结果一致性：正在生成首个结果"
+        : null;
 
-    return [fileLine, targetLine, descriptionLine, recommendedLine, matchedLine, ...open3dResultLines].filter(Boolean) as string[];
+    return [fileLine, targetLine, descriptionLine, recommendedLine, matchedLine, freshnessLine, ...open3dResultLines].filter(Boolean) as string[];
   }, [
     activeAlgorithm,
     isRegistrationAlgorithm,
+    isCurrentOpen3dResultFresh,
+    isOpen3dProcessing,
     requiresTargetPointCloud,
     open3dFile,
+    open3dResult,
     open3dResultLines,
     open3dTargetFile,
     sampleOpen3dFile,
@@ -581,6 +648,7 @@ export default function App() {
               </div>
               <PointCloudViewer
                 layers={open3dMainLayers}
+                referenceLayers={open3dReferenceLayers}
                 emptyMessage={
                   requiresTargetPointCloud
                     ? "请先上传源点云和目标点云，或载入配准样例对。"
@@ -613,6 +681,16 @@ export default function App() {
                 <span>{statusText}</span>
                 <span>{open3dFile ? open3dFile.name : `处理耗时：${elapsedMs} ms`}</span>
               </div>
+              {isRegistrationAlgorithm && open3dResult ? (
+                <Open3DRegistrationSummary
+                  algorithmId={open3dResult.meta.algorithm}
+                  result={open3dResult}
+                  paramsSnapshot={lastAppliedParamValues}
+                  isFresh={isCurrentOpen3dResultFresh}
+                  sampleDescription={selectedOpen3dSample?.description}
+                  showDifferenceHint={Boolean(selectedOpen3dSample && registrationHintSampleIds.has(selectedOpen3dSample.id))}
+                />
+              ) : null}
               <div className="point-cloud-details compact">
                 {open3dInfoLines.map((line) => (
                   <div className="point-cloud-detail-line" key={line}>

@@ -11,13 +11,16 @@ export type PointCloudLayer = {
 
 type Props = {
   layers: PointCloudLayer[];
+  referenceLayers?: PointCloudLayer[];
   emptyMessage: string;
   pointScale?: number;
   resetToken?: number;
 };
 
-function normalizeLayers(layers: PointCloudLayer[]) {
-  const allPoints = layers.flatMap((layer) => layer.points);
+function normalizeLayers(layers: PointCloudLayer[], referenceLayers?: PointCloudLayer[]) {
+  const basisLayers =
+    referenceLayers && referenceLayers.some((layer) => layer.points.length > 0) ? referenceLayers : layers;
+  const allPoints = basisLayers.flatMap((layer) => layer.points);
   if (allPoints.length === 0) {
     return layers;
   }
@@ -108,9 +111,16 @@ function CameraResetter({
   return null;
 }
 
-export function PointCloudViewer({ layers, emptyMessage, pointScale = 1, resetToken = 0 }: Props) {
+export function PointCloudViewer({ layers, referenceLayers, emptyMessage, pointScale = 1, resetToken = 0 }: Props) {
   const visibleLayers = useMemo(() => layers.filter((layer) => layer.points.length > 0), [layers]);
-  const normalizedLayers = useMemo(() => normalizeLayers(visibleLayers), [visibleLayers]);
+  const visibleReferenceLayers = useMemo(
+    () => referenceLayers?.filter((layer) => layer.points.length > 0) ?? [],
+    [referenceLayers]
+  );
+  const normalizedLayers = useMemo(
+    () => normalizeLayers(visibleLayers, visibleReferenceLayers),
+    [visibleLayers, visibleReferenceLayers]
+  );
   const controlsRef = useRef<any>(null);
 
   if (normalizedLayers.length === 0) {

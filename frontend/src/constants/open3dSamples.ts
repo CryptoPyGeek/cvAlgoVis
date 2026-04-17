@@ -15,19 +15,30 @@ export const OPEN3D_SAMPLES: Open3DSampleDef[] = [
     label: "配准点云对",
     file: samplePath("open3d-registration-source.ply"),
     targetFile: samplePath("open3d-registration-target.ply"),
-    description: "成对的源点云与目标点云，适合演示刚体变换、ICP 点到点配准和配准质量评估。",
+    description: "成对的源点云与目标点云，差异较小，适合演示基础 ICP、刚体变换和配准质量评估。",
     recommendedAlgorithms: [
       "transform_point_cloud",
       "registration_icp_point_to_point",
       "registration_icp_point_to_plane",
+      "registration_colored_icp",
+      "evaluate_registration",
+      "compute_point_cloud_distance"
+    ]
+  },
+  {
+    id: "registration-pair-rotated",
+    label: "旋转错位配准对",
+    file: samplePath("open3d-registration-rotated-source.ply"),
+    targetFile: samplePath("open3d-registration-rotated-target.ply"),
+    description: "带旋转和更明显错位的点云对，更适合观察 FPFH、全局粗配准与一体化工作流的差异。",
+    recommendedAlgorithms: [
       "compute_fpfh_feature",
       "registration_ransac_based_on_feature_matching",
       "registration_fast_based_on_feature_matching",
-      "registration_colored_icp",
       "registration_ransac_then_icp_point_to_plane",
       "registration_fast_then_icp_point_to_plane",
-      "evaluate_registration",
-      "compute_point_cloud_distance"
+      "registration_icp_point_to_plane",
+      "registration_colored_icp"
     ]
   },
   {

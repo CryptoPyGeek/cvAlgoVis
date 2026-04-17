@@ -289,6 +289,48 @@ pre {
   word-break: break-word;
 }
 
+.registration-summary {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  background: #11151d;
+}
+
+.registration-summary-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.registration-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.registration-summary-item {
+  background: #0d1016;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.registration-summary-item-wide {
+  grid-column: 1 / -1;
+}
+
+.registration-summary-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.registration-summary-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 .point-cloud-legend {
   display: flex;
   gap: 14px;

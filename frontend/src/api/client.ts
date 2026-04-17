@@ -75,6 +75,7 @@ export async function processOpen3D(payload: {
   params: Record<string, number>;
   file: File;
   target_file?: File | null;
+  signal?: AbortSignal;
 }): Promise<Open3DProcessResponse> {
   const formData = new FormData();
   formData.append("algorithm_id", payload.algorithm_id);
@@ -86,7 +87,8 @@ export async function processOpen3D(payload: {
 
   const res = await fetch(`${API_BASE}/open3d/process`, {
     method: "POST",
-    body: formData
+    body: formData,
+    signal: payload.signal
   });
   if (!res.ok) {
     const text = await res.text();
