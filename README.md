@@ -1,31 +1,102 @@
 # cvAlgoVis
 
-一个可交互的计算机视觉实验应用：前端实时调参，后端支持 `OpenCV` 图像处理与 `Open3D` 点云基础处理，并通过独立接口分别返回结果。
+`cvAlgoVis` 是一个面向教学、演示与快速验证的可交互视觉实验平台。项目当前同时支持：
 
-## 功能概览
+- `OpenCV` 图像处理工作流
+- `Open3D` 点云处理与点云配准工作流
+- `Web` 开发模式
+- `Windows` 桌面 EXE 打包与运行
 
-- 主页为四方格工作台：
-  - 左上：效果显示区（处理后图像）
-  - 右上：参数设置区（含参数控制说明）
-  - 左下：原始图像区
-  - 右下：代码区（支持字号调节与高亮显示）
-- 算法切换已扩充为九大类：
-  - 颜色与强度处理（RGB/HSV/YUV/Lab、HDR）
-  - 几何变换（仿射、透视、旋转、缩放、平移、倾斜）
-  - 阈值与二值化（二值化、自适应、全局、Otsu）
-  - 去噪与平滑（高斯、中值、均值、双边）
-  - 形态学处理（开/闭/梯度/黑帽/白帽/顶帽/底帽）
-  - 梯度与边缘检测（Canny、Laplacian）
-  - 图像分割（分水岭、GrabCut）
-  - 特征检测与描述（Harris、Shi-Tomasi、FAST、SIFT、SURF、ORB、LBP、HOG）
-  - 匹配与检索（KNN、BF、FLANN、模板匹配、模板匹配+同源）
-- 参数交互：滑块 + 数值输入 + 鼠标滚轮微调
-- 实时反馈：前端节流调用 `/process`
-- 多库独立：`OpenCV` 继续使用图像工作流，`Open3D` 使用点云文件工作流
-- 开发辅助：算法 Python 代码片段 + OpenCV 函数说明
-- 代码高亮：后端 Pygments 生成，主题为 Monokai
-- 默认样例图：`frontend/public/samples/contact.png`
-- Open3D 首版支持：`ply` / `pcd` 点云文件，当前返回处理摘要与统计信息
+界面左上角品牌当前显示为：`cvAlgoVis 词元视觉`。
+
+## 项目定位
+
+这个项目不是单纯的算法集合，而是一个“前端可调参 + 后端即时计算 + 结果可视化”的实验工作台：
+
+- 前端负责算法切换、参数调节、样例载入和结果可视化
+- 后端负责 OpenCV / Open3D 实际计算
+- 图像和点云分别通过独立接口处理
+- 代码片段、函数说明、结果摘要会同步显示，便于教学与调试
+
+## 当前能力
+
+### OpenCV 工作流
+
+当前 OpenCV 已按 10 个模块组织：
+
+- 颜色与强度处理
+- 几何变换
+- 阈值与二值化
+- 去噪与平滑
+- 形态学处理
+- 梯度与边缘检测
+- 图像分割
+- 特征检测与描述
+- 匹配与检索
+- 增强处理
+
+界面表现上，OpenCV 模式保持四区工作台：
+
+- 左上：效果显示区
+- 右上：参数设置区
+- 左下：原始图像区
+- 右下：代码区
+
+同时支持：
+
+- 滑块 + 数值输入 + 鼠标滚轮微调
+- 代码片段高亮显示（Pygments）
+- OpenCV 函数说明接口
+- 前端节流调用 `/process` 实时反馈处理结果
+
+### Open3D 工作流
+
+当前 Open3D 已按 5 个模块组织：
+
+- 点云基础处理
+- 点云过滤采样
+- 点云分割聚类
+- 点云几何分析
+- 点云配准
+
+当前已支持的代表性能力包括：
+
+- 体素下采样
+- 法线估计
+- 统计/半径离群点去除
+- 平面分割与平面外点提取
+- DBSCAN 聚类
+- 轴对齐/有向包围盒
+- 凸包、最近邻距离、点云间距离、马氏距离
+- 刚体变换
+- ICP 点到点 / 点到面配准
+- FPFH 特征
+- RANSAC / 快速全局配准
+- 彩色 ICP
+- 粗配准 + 精配准一体化流程
+- 配准质量评估
+
+当前 Open3D 界面特性包括：
+
+- 支持上传 `ply` / `pcd`
+- 支持源点云 / 目标点云双文件配准场景
+- 支持样例点云一键载入
+- 支持 `原始 / 处理后 / 目标对齐 / 叠加 / 误差视图`
+- 支持法线估计结果可视化
+- 支持配准结果摘要、质量等级和误差统计显示
+
+### 当前内置点云样例
+
+项目当前内置以下 Open3D 样例文件：
+
+- `配准点云对`
+- `旋转错位配准对`
+- `平面 + 离群点`
+- `立方体格点`
+- `分层斜坡`
+- `球壳点云`
+
+对应文件位于 `frontend/public/samples/`。
 
 ## 界面截图
 
@@ -45,9 +116,10 @@
 
 - 前端：React + TypeScript + Vite
 - 后端：FastAPI + OpenCV + Open3D + NumPy
-- 测试：Pytest（单元 + 集成）
+- 桌面端：Electron + Python sidecar（PyInstaller）
+- 测试：Pytest
 
-## 当前目录结构（与项目现状一致）
+## 当前目录结构
 
 ```text
 cvAlgoVis/
@@ -61,43 +133,46 @@ cvAlgoVis/
       services/
         algorithms.py
         image_io.py
+        open3d_algorithms.py
+        open3d_pipeline.py
         opencv_reference.py
         pipeline.py
     tests/
       test_algorithms_unit.py
       test_api_process.py
+      test_open3d_algorithms_unit.py
+    entry.py
+    pyinstaller.spec
     requirements.txt
-  frontend/
-    public/
-      samples/contact.png
-      screenshots/
-        ui-workbench.png
-        sample-before.svg
-        sample-after.svg
-    src/
-      api/client.ts
-      components/
-        AlgorithmSelector.tsx
-        CodePanel.tsx
-        ImagePreviewPanel.tsx
-        LibrarySelector.tsx
-        ParamControlPanel.tsx
-      config/libraryAlgorithmMap.ts
-      hooks/
-        useDebouncedEffect.ts
-        useWheelAdjust.ts
-      App.tsx
-      main.tsx
-      styles.css
-      types.ts
-    index.html
-    package.json
-    tsconfig.json
-    vite.config.ts
+  desktop/
+    electron/
+      main.js
+      preload.js
+      electron-builder.yml
+      package.json
   docs/
     api.md
+    desktop-packaging.md
+  frontend/
+    public/
+      samples/
+      screenshots/
+    src/
+      components/
+      config/
+      constants/
+      api/
+      App.tsx
+      styles.css
+      types.ts
+    package.json
+    vite.config.ts
+  scripts/
+    build-desktop-win.ps1
+    clean-desktop.ps1
+    smoke-test-desktop.ps1
+  package.json
   README.md
-  .gitignore
 ```
 
 ## 环境要求
@@ -108,20 +183,20 @@ cvAlgoVis/
 
 ## 快速启动
 
-### 1) 启动后端
+### 1. 启动后端
 
 ```bash
 cd backend
 python -m venv .venv
 ```
 
-Windows:
+Windows：
 
 ```bash
 .venv\Scripts\activate
 ```
 
-macOS/Linux:
+macOS/Linux：
 
 ```bash
 source .venv/bin/activate
@@ -131,18 +206,12 @@ source .venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Git Bash 推荐（避免 `uvicorn: command not found`）：
+后端地址：`http://127.0.0.1:8000`
 
-```bash
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-后端地址：`http://localhost:8000`
-
-### 2) 启动前端
+### 2. 启动前端
 
 ```bash
 cd frontend
@@ -150,7 +219,25 @@ npm install
 npm run dev
 ```
 
-前端地址：`http://localhost:5173`
+前端地址：`http://127.0.0.1:5173`
+
+## 主要接口
+
+当前后端主要提供以下接口：
+
+- `GET /health`
+- `GET /catalog`
+- `GET /code-snippet?algorithm_id=...`
+- `GET /opencv-reference`
+- `POST /process`
+- `POST /open3d/process`
+
+说明：
+
+- `/process` 用于 OpenCV 图像处理
+- `/open3d/process` 用于 Open3D 点云处理
+- `/catalog` 提供库、模块、算法和参数定义
+- `/code-snippet` 返回算法 Python 代码片段和高亮 HTML
 
 ## 测试
 
@@ -163,7 +250,7 @@ pytest -q
 
 ## 桌面软件打包
 
-项目已提供基于 `Electron + Python sidecar` 的 **Windows 一键自动化打包**流程，默认输出可双击运行的便携版 EXE。
+项目已提供基于 `Electron + Python sidecar` 的 Windows 一键自动化打包流程，默认输出可双击运行的便携版 EXE。
 
 相关文件：
 
@@ -171,6 +258,7 @@ pytest -q
 - `backend/entry.py`
 - `backend/pyinstaller.spec`
 - `scripts/build-desktop-win.ps1`
+- `scripts/clean-desktop.ps1`
 - `scripts/smoke-test-desktop.ps1`
 - `docs/desktop-packaging.md`
 
@@ -191,7 +279,7 @@ npm run build:desktop:win
 1. 清理旧构建产物
 2. 构建前端静态资源
 3. 打包后端 sidecar
-4. 复用本地 Electron 发行版打出 Windows portable EXE
+4. 使用 Electron Builder 输出 Windows portable EXE
 5. 执行桌面包自检
 
 默认产物位置：
@@ -203,10 +291,11 @@ npm run build:desktop:win
 说明：
 
 - 当前默认自动化目标为 Windows
+- 桌面模式后端默认监听 `127.0.0.1:18000`
 - 软件启动后会自动拉起静默后端，不弹黑框
-- 前端会在桌面模式下自动读取运行时注入的 API 地址，不再写死开发地址
+- 前端会在桌面模式下读取运行时注入的 API 地址
 - 若 `desktop/electron/node_modules/electron/dist` 缺失，脚本会先安装 Electron 依赖
-- `dist-desktop/`、`backend/dist/`、`backend/build/`、`.runtime/` 为构建或运行期产物，不需要手工提交
+- `dist-desktop/`、`backend/dist/`、`backend/build/`、`.runtime/`、`node_modules/`、`__pycache__/` 都属于构建或运行期产物，不需要手工提交
 
 ## OpenCV 函数清单（用途/参数/返回值）
 
