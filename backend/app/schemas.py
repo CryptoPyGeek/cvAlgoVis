@@ -47,6 +47,7 @@ class Open3DProcessResponse(BaseModel):
     source_points: list[list[float]] = Field(default_factory=list)
     target_points: list[list[float]] = Field(default_factory=list)
     processed_points: list[list[float]] = Field(default_factory=list)
+    processed_normals: list[list[float]] = Field(default_factory=list)
 
 
 class ErrorResponse(BaseModel):

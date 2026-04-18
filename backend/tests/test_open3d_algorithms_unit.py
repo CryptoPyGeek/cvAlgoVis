@@ -9,6 +9,7 @@ from app.services.open3d_algorithms import (
     compute_fpfh_feature,
     compute_nearest_neighbor_distance,
     compute_point_cloud_distance,
+    estimate_normals,
     evaluate_registration,
     get_axis_aligned_bounding_box,
     hidden_point_removal,
@@ -137,6 +138,16 @@ def test_convex_hull_returns_hull_vertices():
     processed, stats = compute_convex_hull(sample_shape_cloud(), {"joggle_inputs": 0})
     assert len(processed.points) == stats["hull_vertex_count"]
     assert stats["triangle_count"] > 0
+
+
+def test_estimate_normals_returns_normals_for_each_point():
+    processed, stats = estimate_normals(sample_shape_cloud(), {"radius": 1.0, "max_nn": 8})
+    normals = np.asarray(processed.normals)
+    assert processed.has_normals()
+    assert len(normals) == len(processed.points)
+    assert stats["has_normals"] is True
+    assert stats["radius"] == 1.0
+    assert stats["max_nn"] == 8
 
 
 def test_transform_point_cloud_changes_positions():

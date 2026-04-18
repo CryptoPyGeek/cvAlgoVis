@@ -170,7 +170,9 @@ def test_open3d_process_success(monkeypatch):
             },
             "stats": {"voxel_size": 0.05},
             "source_points": [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]],
+            "target_points": [],
             "processed_points": [[0.0, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -187,6 +189,45 @@ def test_open3d_process_success(monkeypatch):
     assert payload["meta"]["file_type"] == "ply"
     assert payload["source_points"] == [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]]
     assert payload["processed_points"] == [[0.0, 0.0, 0.0]]
+
+
+def test_open3d_process_estimate_normals_returns_normal_preview(monkeypatch):
+    def fake_process_point_cloud_file(payload, file_bytes, target_file_bytes=None):
+        assert payload.algorithm_id == "estimate_normals"
+        assert payload.params["radius"] == 0.1
+        assert payload.params["max_nn"] == 30
+        assert target_file_bytes is None
+        return {
+            "result_kind": "point_cloud_summary",
+            "summary": "法线估计完成，点云法线已更新。",
+            "meta": {
+                "elapsed_ms": 9,
+                "algorithm": payload.algorithm_id,
+                "filename": payload.filename,
+                "file_type": "ply",
+                "points_before": 40,
+                "points_after": 40,
+            },
+            "stats": {"radius": 0.1, "max_nn": 30, "has_normals": True},
+            "source_points": [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]],
+            "target_points": [],
+            "processed_points": [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]],
+            "processed_normals": [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0]],
+        }
+
+    monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
+
+    response = client.post(
+        "/open3d/process",
+        data={"algorithm_id": "estimate_normals", "params": '{"radius": 0.1, "max_nn": 30}'},
+        files={"file": ("cloud.ply", b"ply-data", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["algorithm"] == "estimate_normals"
+    assert payload["stats"]["has_normals"] is True
+    assert payload["processed_points"] == [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0]]
+    assert payload["processed_normals"] == [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0]]
 
 
 def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
@@ -207,7 +248,9 @@ def test_open3d_process_new_filter_sampling_algorithm(monkeypatch):
             },
             "stats": {"every_k_points": 4},
             "source_points": [[0.0, 0.0, 0.0], [0.2, 0.0, 0.0]],
+            "target_points": [],
             "processed_points": [[0.0, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -242,7 +285,9 @@ def test_open3d_process_new_segmentation_algorithm(monkeypatch):
             },
             "stats": {"cluster_count": 2, "largest_cluster_size": 30},
             "source_points": [[0.0, 0.0, 0.0], [0.1, 0.1, 0.0]],
+            "target_points": [],
             "processed_points": [[0.0, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -279,6 +324,7 @@ def test_open3d_process_transform_algorithm(monkeypatch):
             "source_points": [[0.0, 0.0, 0.0]],
             "target_points": [],
             "processed_points": [[0.15, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -315,6 +361,7 @@ def test_open3d_process_registration_algorithm_with_target(monkeypatch):
             "source_points": [[0.0, 0.0, 0.0]],
             "target_points": [[0.2, 0.0, 0.0]],
             "processed_points": [[0.19, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -354,6 +401,7 @@ def test_open3d_process_point_to_plane_registration(monkeypatch):
             "source_points": [[0.0, 0.0, 0.0]],
             "target_points": [[0.2, 0.0, 0.0]],
             "processed_points": [[0.18, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)
@@ -396,6 +444,7 @@ def test_open3d_process_compute_fpfh_feature(monkeypatch):
             "source_points": [[0.0, 0.0, 0.0]],
             "target_points": [],
             "processed_points": [[0.0, 0.0, 0.0]],
+            "processed_normals": [],
         }
 
     monkeypatch.setattr("app.main.process_point_cloud_file", fake_process_point_cloud_file)

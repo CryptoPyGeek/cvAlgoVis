@@ -331,6 +331,14 @@ pre {
   color: var(--text);
 }
 
+.legend-target-muted {
+  background: #25364f;
+}
+
+.legend-error-heat {
+  background: linear-gradient(90deg, #26d7ae 0%, #ffd84d 50%, #ff5f5f 100%);
+}
+
 .point-cloud-legend {
   display: flex;
   gap: 14px;
@@ -364,6 +372,10 @@ pre {
 
 .legend-target {
   background: #47d7ac;
+}
+
+.legend-normal {
+  background: #ff9f43;
 }
 
 .point-cloud-toolbar {

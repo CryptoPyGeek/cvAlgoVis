@@ -60,4 +60,5 @@ export type Open3DProcessResponse = {
   source_points: [number, number, number][];
   target_points: [number, number, number][];
   processed_points: [number, number, number][];
+  processed_normals: [number, number, number][];
 };

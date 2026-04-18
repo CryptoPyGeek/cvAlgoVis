@@ -60,7 +60,7 @@ export default function App() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [pointScale, setPointScale] = useState(1);
   const [viewerResetToken, setViewerResetToken] = useState(0);
-  const [open3dViewMode, setOpen3dViewMode] = useState<"source" | "processed" | "overlay">("overlay");
+  const [open3dViewMode, setOpen3dViewMode] = useState<"source" | "processed" | "overlay" | "target" | "error">("overlay");
   const [isOpen3dProcessing, setIsOpen3dProcessing] = useState(false);
   const [lastAppliedAlgorithmId, setLastAppliedAlgorithmId] = useState<string | null>(null);
   const [lastAppliedParamsSignature, setLastAppliedParamsSignature] = useState<string>("");
@@ -102,6 +102,35 @@ export default function App() {
     lastAppliedAlgorithmId === activeAlgorithm?.id &&
     lastAppliedParamsSignature === currentOpen3dParamsSignature;
   const registrationHintSampleIds = new Set(["registration-pair"]);
+
+  function computeNearestTargetDistances(
+    processed: [number, number, number][],
+    target: [number, number, number][]
+  ): number[] {
+    if (!processed.length || !target.length) return [];
+    return processed.map(([px, py, pz]) => {
+      let minDistanceSq = Number.POSITIVE_INFINITY;
+      for (const [tx, ty, tz] of target) {
+        const dx = px - tx;
+        const dy = py - ty;
+        const dz = pz - tz;
+        const distanceSq = dx * dx + dy * dy + dz * dz;
+        if (distanceSq < minDistanceSq) {
+          minDistanceSq = distanceSq;
+        }
+      }
+      return Math.sqrt(minDistanceSq);
+    });
+  }
+
+  function errorToColor(value: number, minValue: number, maxValue: number): [number, number, number] {
+    const span = Math.max(maxValue - minValue, 1e-6);
+    const t = Math.min(Math.max((value - minValue) / span, 0), 1);
+    const r = t;
+    const g = 1 - Math.abs(t - 0.5) * 1.6;
+    const b = 1 - t;
+    return [r, Math.min(Math.max(g, 0.15), 1), b];
+  }
 
   function toDataUrl(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -422,28 +451,104 @@ export default function App() {
       `输入点数：${open3dResult.meta.points_before}`,
       `输出点数：${open3dResult.meta.points_after}`,
       `文件类型：${open3dResult.meta.file_type}`,
+      ...(open3dResult.meta.algorithm === "estimate_normals" && open3dResult.processed_normals.length > 0
+        ? ["法线预览：已显示（基于预览采样点）"]
+        : []),
       ...statsLines
     ];
   }, [isCurrentOpen3dResultFresh, isOpen3dProcessing, open3dResult, requiresTargetPointCloud]);
+
+  const showNormalPreview = useMemo(
+    () =>
+      Boolean(
+        open3dResult &&
+          open3dResult.meta.algorithm === "estimate_normals" &&
+          open3dResult.processed_points.length > 0 &&
+          open3dResult.processed_normals.length === open3dResult.processed_points.length
+      ),
+    [open3dResult]
+  );
 
   const open3dOverlayLayers = useMemo(() => {
     if (!open3dResult) return [];
     if (requiresTargetPointCloud) {
       return [
         { points: open3dResult.target_points, color: "#47d7ac", size: 0.07 },
-        { points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }
+        {
+          points: open3dResult.processed_points,
+          color: "#ffd84d",
+          size: 0.095,
+          normals: showNormalPreview ? open3dResult.processed_normals : undefined,
+          showNormals: showNormalPreview,
+          normalColor: "#ff9f43",
+          normalScale: 0.18
+        }
       ];
     }
     return [
       { points: open3dResult.source_points, color: "#4da3ff", size: 0.06 },
+      {
+        points: open3dResult.processed_points,
+        color: "#ffd84d",
+        size: 0.095,
+        normals: showNormalPreview ? open3dResult.processed_normals : undefined,
+        showNormals: showNormalPreview,
+        normalColor: "#ff9f43",
+        normalScale: 0.18
+      }
+    ];
+  }, [open3dResult, requiresTargetPointCloud, showNormalPreview]);
+
+  const open3dProcessedLayers = useMemo(() => {
+    if (!open3dResult) return [];
+    return [
+      {
+        points: open3dResult.processed_points,
+        color: "#ffd84d",
+        size: 0.095,
+        normals: showNormalPreview ? open3dResult.processed_normals : undefined,
+        showNormals: showNormalPreview,
+        normalColor: "#ff9f43",
+        normalScale: 0.18
+      }
+    ];
+  }, [open3dResult, showNormalPreview]);
+
+  const open3dRegistrationErrorData = useMemo(() => {
+    if (!open3dResult || !requiresTargetPointCloud || !open3dResult.target_points.length || !open3dResult.processed_points.length) {
+      return null;
+    }
+    const distances = computeNearestTargetDistances(open3dResult.processed_points, open3dResult.target_points);
+    if (!distances.length) return null;
+    const minError = Math.min(...distances);
+    const maxError = Math.max(...distances);
+    const sorted = [...distances].sort((a, b) => a - b);
+    const meanError = distances.reduce((sum, value) => sum + value, 0) / distances.length;
+    const p95Error = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))];
+    const colors = distances.map((value) => errorToColor(value, minError, maxError));
+    return { distances, colors, minError, maxError, meanError, p95Error };
+  }, [open3dResult, requiresTargetPointCloud]);
+
+  const open3dTargetAlignmentLayers = useMemo(() => {
+    if (!open3dResult || !requiresTargetPointCloud) return [];
+    return [
+      { points: open3dResult.target_points, color: "#47d7ac", size: 0.07 },
       { points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }
     ];
   }, [open3dResult, requiresTargetPointCloud]);
 
-  const open3dProcessedLayers = useMemo(() => {
-    if (!open3dResult) return [];
-    return [{ points: open3dResult.processed_points, color: "#ffd84d", size: 0.095 }];
-  }, [open3dResult]);
+  const open3dErrorLayers = useMemo(() => {
+    if (!open3dResult || !requiresTargetPointCloud || !open3dRegistrationErrorData) return [];
+    return [
+      { points: open3dResult.target_points, color: "#25364f", size: 0.05 },
+      {
+        points: open3dResult.processed_points,
+        color: "#ffffff",
+        colors: open3dRegistrationErrorData.colors,
+        size: 0.11
+      }
+    ];
+  }, [open3dRegistrationErrorData, open3dResult, requiresTargetPointCloud]);
 
   const open3dReferenceLayers = useMemo(() => {
     if (!open3dResult) return [];
@@ -464,11 +569,17 @@ export default function App() {
     if (open3dViewMode === "source") {
       return open3dResult ? [{ points: open3dResult.source_points, color: "#4da3ff", size: 0.085 }] : [];
     }
+    if (open3dViewMode === "target") {
+      return open3dTargetAlignmentLayers;
+    }
+    if (open3dViewMode === "error") {
+      return open3dErrorLayers;
+    }
     if (open3dViewMode === "processed") {
       return open3dProcessedLayers;
     }
     return open3dOverlayLayers;
-  }, [open3dOverlayLayers, open3dProcessedLayers, open3dResult, open3dViewMode]);
+  }, [open3dErrorLayers, open3dOverlayLayers, open3dProcessedLayers, open3dResult, open3dTargetAlignmentLayers, open3dViewMode]);
 
   const open3dInfoLines = useMemo(() => {
     const fileLine = open3dFile
@@ -502,8 +613,11 @@ export default function App() {
       : isOpen3dProcessing
         ? "结果一致性：正在生成首个结果"
         : null;
+    const normalLine = showNormalPreview ? "法线可视化：已在处理后/叠加视图中显示" : null;
 
-    return [fileLine, targetLine, descriptionLine, recommendedLine, matchedLine, freshnessLine, ...open3dResultLines].filter(Boolean) as string[];
+    return [fileLine, targetLine, descriptionLine, recommendedLine, matchedLine, freshnessLine, normalLine, ...open3dResultLines].filter(
+      Boolean
+    ) as string[];
   }, [
     activeAlgorithm,
     isRegistrationAlgorithm,
@@ -516,6 +630,7 @@ export default function App() {
     open3dTargetFile,
     sampleOpen3dFile,
     sampleOpen3dTargetFile,
+    showNormalPreview,
     selectedOpen3dSample
   ]);
 
@@ -524,7 +639,7 @@ export default function App() {
       <header className="topbar panel">
         <div className="brand">
           <strong>cvAlgoVis</strong>
-          <span>Industrial Console</span>
+          <span>词元视觉</span>
         </div>
         <div className="selectors">
           <LibrarySelector libraries={catalog?.libraries ?? []} value={libraryId} onChange={setLibraryId} />
@@ -622,12 +737,28 @@ export default function App() {
                   >
                     处理后
                   </button>
+                  {requiresTargetPointCloud ? (
+                    <button
+                      className={`ghost small ${open3dViewMode === "target" ? "mode-active" : ""}`}
+                      onClick={() => setOpen3dViewMode("target")}
+                    >
+                      目标对齐
+                    </button>
+                  ) : null}
                   <button
                     className={`ghost small ${open3dViewMode === "overlay" ? "mode-active" : ""}`}
                     onClick={() => setOpen3dViewMode("overlay")}
                   >
                     叠加
                   </button>
+                  {requiresTargetPointCloud ? (
+                    <button
+                      className={`ghost small ${open3dViewMode === "error" ? "mode-active" : ""}`}
+                      onClick={() => setOpen3dViewMode("error")}
+                    >
+                      误差视图
+                    </button>
+                  ) : null}
                 </div>
                 <div className="point-cloud-toolbar-actions">
                   <button className="ghost small" onClick={() => setViewerResetToken((value) => value + 1)}>
@@ -670,10 +801,40 @@ export default function App() {
                     目标点云
                   </span>
                 )}
+                {requiresTargetPointCloud && open3dViewMode === "target" && (
+                  <>
+                    <span className="legend-item">
+                      <i className="legend-dot legend-target" />
+                      目标点云
+                    </span>
+                    <span className="legend-item">
+                      <i className="legend-dot legend-processed" />
+                      配准后源点云
+                    </span>
+                  </>
+                )}
+                {requiresTargetPointCloud && open3dViewMode === "error" && (
+                  <>
+                    <span className="legend-item">
+                      <i className="legend-dot legend-target-muted" />
+                      目标参考
+                    </span>
+                    <span className="legend-item">
+                      <i className="legend-dot legend-error-heat" />
+                      误差热力
+                    </span>
+                  </>
+                )}
                 {(open3dViewMode === "processed" || open3dViewMode === "overlay") && (
                   <span className="legend-item">
                     <i className="legend-dot legend-processed" />
                     {requiresTargetPointCloud ? (isRegistrationAlgorithm ? "配准后源点云" : "源点云") : "处理后点云"}
+                  </span>
+                )}
+                {(open3dViewMode === "processed" || open3dViewMode === "overlay") && showNormalPreview && (
+                  <span className="legend-item">
+                    <i className="legend-dot legend-normal" />
+                    法线方向
                   </span>
                 )}
               </div>
@@ -689,6 +850,7 @@ export default function App() {
                   isFresh={isCurrentOpen3dResultFresh}
                   sampleDescription={selectedOpen3dSample?.description}
                   showDifferenceHint={Boolean(selectedOpen3dSample && registrationHintSampleIds.has(selectedOpen3dSample.id))}
+                  errorSummary={open3dRegistrationErrorData}
                 />
               ) : null}
               <div className="point-cloud-details compact">

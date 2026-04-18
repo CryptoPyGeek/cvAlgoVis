@@ -7,8 +7,6 @@ backend/.venv/
 backend/build/
 backend/dist/
 dist-desktop/
-desktop/
-desktop/electron/
 desktop/electron/.runtime/
 scripts/
 open3d/

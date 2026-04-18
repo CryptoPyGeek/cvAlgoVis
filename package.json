@@ -1,0 +1,11 @@
+{
+  "name": "cvalgovis",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:desktop": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop-win.ps1",
+    "build:desktop:win": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop-win.ps1",
+    "clean:desktop": "powershell -ExecutionPolicy Bypass -File scripts/clean-desktop.ps1",
+    "smoke:desktop": "powershell -ExecutionPolicy Bypass -File scripts/smoke-test-desktop.ps1"
+  }
+}

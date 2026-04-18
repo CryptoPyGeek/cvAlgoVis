@@ -149,7 +149,16 @@ def process_point_cloud_file(
         source_points=serialize_preview_points(point_cloud),
         target_points=serialize_preview_points(target_cloud) if target_cloud is not None else [],
         processed_points=serialize_preview_points(processed_cloud),
+        processed_normals=serialize_preview_normals(processed_cloud),
     )
+
+
+def _preview_indices(total: int, max_points: int = MAX_PREVIEW_POINTS) -> np.ndarray:
+    if total <= 0:
+        return np.empty((0,), dtype=np.int32)
+    if total <= max_points:
+        return np.arange(total, dtype=np.int32)
+    return np.linspace(0, total - 1, max_points, dtype=np.int32)
 
 
 def serialize_preview_points(point_cloud, max_points: int = MAX_PREVIEW_POINTS) -> list[list[float]]:
@@ -157,9 +166,19 @@ def serialize_preview_points(point_cloud, max_points: int = MAX_PREVIEW_POINTS) 
     if points.size == 0:
         return []
 
-    total = len(points)
-    if total > max_points:
-        indices = np.linspace(0, total - 1, max_points, dtype=np.int32)
-        points = points[indices]
+    indices = _preview_indices(len(points), max_points)
+    preview_points = points[indices]
+    return [[float(x), float(y), float(z)] for x, y, z in preview_points]
 
-    return [[float(x), float(y), float(z)] for x, y, z in points]
+
+def serialize_preview_normals(point_cloud, max_points: int = MAX_PREVIEW_POINTS) -> list[list[float]]:
+    if point_cloud is None or not point_cloud.has_normals():
+        return []
+
+    normals = np.asarray(point_cloud.normals, dtype=np.float32)
+    if normals.size == 0:
+        return []
+
+    indices = _preview_indices(len(normals), max_points)
+    preview_normals = normals[indices]
+    return [[float(x), float(y), float(z)] for x, y, z in preview_normals]

@@ -6,6 +6,11 @@ import * as THREE from "three";
 export type PointCloudLayer = {
   points: [number, number, number][];
   color: string;
+  colors?: [number, number, number][];
+  normals?: [number, number, number][];
+  normalColor?: string;
+  normalScale?: number;
+  showNormals?: boolean;
   size?: number;
 };
 
@@ -53,7 +58,11 @@ function normalizeLayers(layers: PointCloudLayer[], referenceLayers?: PointCloud
       (x - centerX) * scale,
       (y - centerY) * scale,
       (z - centerZ) * scale
-    ])
+    ]),
+    normals:
+      layer.normals && layer.normals.length === layer.points.length
+        ? layer.normals.map(([nx, ny, nz]) => [nx * scale, ny * scale, nz * scale] as [number, number, number])
+        : undefined
   }));
 }
 
@@ -68,14 +77,75 @@ function PointLayer({ layer, pointScale }: { layer: PointCloudLayer; pointScale:
     });
     return data;
   }, [layer.points]);
+  const pointColors = useMemo(() => {
+    if (!layer.colors || layer.colors.length !== layer.points.length) {
+      return null;
+    }
+    const data = new Float32Array(layer.colors.length * 3);
+    layer.colors.forEach(([r, g, b], index) => {
+      const offset = index * 3;
+      data[offset] = r;
+      data[offset + 1] = g;
+      data[offset + 2] = b;
+    });
+    return data;
+  }, [layer.colors, layer.points.length]);
 
   return (
-    <points>
+    <>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" array={positions} count={layer.points.length} itemSize={3} />
+          {pointColors ? (
+            <bufferAttribute attach="attributes-color" array={pointColors} count={layer.points.length} itemSize={3} />
+          ) : null}
+        </bufferGeometry>
+        <pointsMaterial
+          color={pointColors ? "#ffffff" : layer.color}
+          size={(layer.size ?? 0.035) * pointScale}
+          sizeAttenuation
+          vertexColors={Boolean(pointColors)}
+        />
+      </points>
+      {layer.showNormals && layer.normals && layer.normals.length === layer.points.length ? (
+        <NormalLayer layer={layer} />
+      ) : null}
+    </>
+  );
+}
+
+function NormalLayer({ layer }: { layer: PointCloudLayer }) {
+  const normalSegments = useMemo(() => {
+    if (!layer.normals || layer.normals.length !== layer.points.length) {
+      return null;
+    }
+
+    const normalScale = layer.normalScale ?? 0.12;
+    const data = new Float32Array(layer.points.length * 6);
+    layer.points.forEach(([x, y, z], index) => {
+      const [nx, ny, nz] = layer.normals![index];
+      const offset = index * 6;
+      data[offset] = x;
+      data[offset + 1] = y;
+      data[offset + 2] = z;
+      data[offset + 3] = x + nx * normalScale;
+      data[offset + 4] = y + ny * normalScale;
+      data[offset + 5] = z + nz * normalScale;
+    });
+    return data;
+  }, [layer.normals, layer.normalScale, layer.points]);
+
+  if (!normalSegments) {
+    return null;
+  }
+
+  return (
+    <lineSegments>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={positions} count={layer.points.length} itemSize={3} />
+        <bufferAttribute attach="attributes-position" array={normalSegments} count={normalSegments.length / 3} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial color={layer.color} size={(layer.size ?? 0.035) * pointScale} sizeAttenuation />
-    </points>
+      <lineBasicMaterial color={layer.normalColor ?? "#ff9f43"} />
+    </lineSegments>
   );
 }
 

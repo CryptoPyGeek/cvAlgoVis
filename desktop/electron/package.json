@@ -4,10 +4,10 @@
   "private": true,
   "main": "main.js",
   "scripts": {
-    "dev": "electron .",
-    "build": "npm run build:win:portable",
-    "build:win:portable": "electron-builder --config electron-builder.yml --win portable --config.electronDist=node_modules/electron/dist",
-    "build:win:dir": "electron-builder --config electron-builder.yml --dir --config.electronDist=node_modules/electron/dist"
+    "start": "electron .",
+    "build:win:portable": "electron-builder --config electron-builder.yml --win portable",
+    "build:win:dir": "electron-builder --config electron-builder.yml --win dir",
+    "pack:win": "npm run build:win:portable"
   },
   "devDependencies": {
     "electron": "^33.2.1",
